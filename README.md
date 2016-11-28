@@ -1,4 +1,4 @@
-# MQTT-SSL for Photon, Spark Core
+# MQTT-TLS for Photon, Spark Core
 <a href="http://mqtt.org/" target=_blank>MQTT</a> publish/subscribe TLS library for Photon, Spark Core version 0.1.0. This library based <a href="https://github.com/hirotakaster/MQTT">MQTT for Photon, Spark Core</a>
 
 This library's Cipher Suite is based TLS_RSA_WITH_AES_256_CBC_SHA256, and now this library can use server certification only(not use for client private key/certification).
