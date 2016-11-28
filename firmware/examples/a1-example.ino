@@ -74,7 +74,8 @@ void setup() {
 
     RGB.control(true);
 
-    // enable tls. if you don't use TLS, comment out this line.
+    // enable tls. set Root CA pem file. 
+    // if you don't use TLS, comment out this line.
     client.enableTls(letencryptCaPem, sizeof(letencryptCaPem));
     Serial.println("tls enable");
 
