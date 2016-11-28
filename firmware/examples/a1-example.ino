@@ -74,7 +74,7 @@ void setup() {
 
     RGB.control(true);
 
-    // enable tls
+    // enable tls. if you don't use TLS, comment out this line.
     client.enableTls(letencryptCaPem, sizeof(letencryptCaPem));
     Serial.println("tls enable");
 
