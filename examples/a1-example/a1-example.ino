@@ -1,20 +1,4 @@
-# MQTT-TLS for Photon, Spark Core
-<a href="http://mqtt.org/" target=_blank>MQTT</a> publish/subscribe TLS library for Photon, Spark Core version 0.1.0. This library based <a href="https://github.com/hirotakaster/MQTT">MQTT for Photon, Spark Core</a>
-
-This library's Cipher Suite is based <a href="https://github.com/hirotakaster/TlsTcpClient">TlsTcpClient</a>, and now this library can use server certification only(not use for client private key/certification).
-
-## Source Code
-This lightweight library source code are only 2 files. firmware -> MQTT-TLS.cpp, MQTT-TLS.h.
-
-Application can use QOS0,1,2 and retain flag when send a publish message.
-
-## Example
-Some sample sketches for Spark Core and Photon included(firmware/examples/).
- - a1-example.ino	: simple pub/sub sample. 
- 
-```C++
-
-#include "MQTT-TLS/MQTT-TLS.h"
+#include "MQTT-TLS.h"
 
 void callback(char* topic, byte* payload, unsigned int length);
 
@@ -60,7 +44,7 @@ const char letencryptCaPem[] = LET_ENCRYPT_CA_PEM;
  * want to use domain name,
  * MQTT client("www.sample.com", 1883, callback);
  **/
-MQTT client("www.sample.com", 443, callback);
+MQTT client("www.sample.com", 1443, callback);
 
 // recieve message
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -111,4 +95,3 @@ void loop() {
         client.loop();
     delay(200);
 }
-```
