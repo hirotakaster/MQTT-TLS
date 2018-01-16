@@ -53,24 +53,24 @@ void MQTT::initialize(char* domain, uint8_t *ip, uint16_t port, void (*callback)
     buffer = new uint8_t[this->maxpacketsize];
 }
 
-
 void MQTT::addQosCallback(void (*qoscallback)(unsigned int)) {
     this->qoscallback = qoscallback;
 }
 
 bool MQTT::connect(const char *id) {
-    return connect(id,NULL,NULL,0,QOS0,0,0);
+    return connect(id,NULL,NULL,0,QOS0,0,0,true,MQTT_V311);
 }
 
 bool MQTT::connect(const char *id, const char *user, const char *pass) {
-    return connect(id,user,pass,0,QOS0,0,0);
+    return connect(id,user,pass,0,QOS0,0,0,true,MQTT_V311);
 }
 
 bool MQTT::connect(const char *id, const char* willTopic, EMQTT_QOS willQos, uint8_t willRetain, const char* willMessage) {
-    return connect(id,NULL,NULL,willTopic,willQos,willRetain,willMessage);
+    return connect(id,NULL,NULL,willTopic,willQos,willRetain,willMessage,true,MQTT_V311);
 }
 
-bool MQTT::connect(const char *id, const char *user, const char *pass, const char* willTopic, EMQTT_QOS willQos, uint8_t willRetain, const char* willMessage) {
+bool MQTT::connect(const char *id, const char *user, const char *pass, const char* willTopic, EMQTT_QOS willQos, uint8_t willRetain, const char* willMessage, bool cleanSession, MQTT_VERSION version) {
+    debug_tls("Connecting to MQTT broker ...");
     if (!isConnected()) {
         int result = 0;
         if (ip == NULL) {
@@ -92,19 +92,29 @@ bool MQTT::connect(const char *id, const char *user, const char *pass, const cha
 
         if (result) {
             nextMsgId = 1;
-            uint8_t d[9] = {0x00,0x06,'M','Q','I','s','d','p',MQTTPROTOCOLVERSION};
+
             // Leave room in the buffer for header and variable length field
             uint16_t length = 5;
-            unsigned int j;
-            for (j = 0;j<9;j++) {
-                buffer[length++] = d[j];
+
+            const uint8_t MQTT_HEADER_V31[] = {0x00,0x06,'M','Q','I','s','d','p', MQTT_V31};
+            const uint8_t MQTT_HEADER_V311[] = {0x00,0x04,'M','Q','T','T',MQTT_V311};
+
+			      if (version == MQTT_V311) {
+			          memcpy(buffer + length, MQTT_HEADER_V311, sizeof(MQTT_HEADER_V311));
+				        length+=sizeof(MQTT_HEADER_V311);
+			      } else {
+			          memcpy(buffer + length, MQTT_HEADER_V31, sizeof(MQTT_HEADER_V31));
+				        length+=sizeof(MQTT_HEADER_V31);
+			      }
+
+            uint8_t v = 0;
+
+            if (cleanSession) {
+                v|= 0x2;
             }
 
-            uint8_t v;
             if (willTopic) {
-                v = 0x06|(willQos<<3)|(willRetain<<5);
-            } else {
-                v = 0x02;
+                v|= 0x04|(willQos<<3)|(willRetain<<5);
             }
 
             if(user != NULL) {
@@ -138,19 +148,23 @@ bool MQTT::connect(const char *id, const char *user, const char *pass, const cha
             while (!available()) {
                 unsigned long t = millis();
                 if (t-lastInActivity > MQTT_KEEPALIVE*1000UL) {
+                    debug_tls("MQTT connection timeout.\n");
                     disconnect();
                     return false;
                 }
             }
+
             uint8_t llen;
             uint16_t len = readPacket(&llen);
 
             if (len == 4 && buffer[3] == 0) {
                 lastInActivity = millis();
                 pingOutstanding = false;
+                debug_tls("MQTT connected.\n");
                 return true;
             }
         }
+        debug_tls("MQTT connection refused.\n");
         disconnect();
     }
     return false;
@@ -494,6 +508,16 @@ uint16_t MQTT::writeString(const char* string, uint8_t* buf, uint16_t pos) {
 
 uint16_t MQTT::netWrite(unsigned char *buff, int length) {
     debug_tls("netWrite!!\n");
+
+    for (int i = 0 ; i < length; i++) {
+      if (buff[i] > ' ' && buff[i] < 127) {
+        debug_tls("%c", buff[i]);
+      } else {
+        debug_tls("%02X ", buff[i]);
+      }
+    }
+    debug_tls("\n");
+
     if (tls == false) {
         return tcpClient.write(buff, length);
     } else {
