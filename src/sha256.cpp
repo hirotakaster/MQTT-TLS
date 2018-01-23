@@ -52,7 +52,7 @@
 
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = (unsigned char *)v; while( n-- ) *p++ = 0;
 }
 
 /*
@@ -396,7 +396,7 @@ int mbedtls_sha256_self_test( int verbose )
     unsigned char sha256sum[32];
     mbedtls_sha256_context ctx;
 
-    buf = (unsigned char *)mbedtls_calloc( 1024, sizeof(unsigned char) );
+    buf = mbedtls_calloc( 1024, sizeof(unsigned char) );
     if( NULL == buf )
     {
         if( verbose != 0 )

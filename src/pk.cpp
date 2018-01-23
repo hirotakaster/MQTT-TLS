@@ -45,7 +45,7 @@
 
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = (unsigned char *)v; while( n-- ) *p++ = 0;
 }
 
 /*
@@ -248,7 +248,10 @@ int mbedtls_pk_verify_ext( mbedtls_pk_type_t type, const void *options,
     if( options != NULL )
         return( MBEDTLS_ERR_PK_BAD_INPUT_DATA );
 
-    return( mbedtls_pk_verify( ctx, md_alg, hash, hash_len, sig, sig_len ) );
+    int ret = mbedtls_pk_verify( ctx, md_alg, hash, hash_len, sig, sig_len );
+    return ret;
+
+//    return( mbedtls_pk_verify( ctx, md_alg, hash, hash_len, sig, sig_len ) );
 }
 
 /*

@@ -55,7 +55,7 @@
 
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = (unsigned char *)v; while( n-- ) *p++ = 0;
 }
 
 /* Length of the "epoch" field in the record header */
@@ -930,7 +930,7 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
         if( ssl->compress_buf == NULL )
         {
             MBEDTLS_SSL_DEBUG_MSG( 3, ( "Allocating compression buffer" ) );
-            ssl->compress_buf = (unsigned char *)mbedtls_calloc( 1, MBEDTLS_SSL_BUFFER_LEN );
+            ssl->compress_buf = mbedtls_calloc( 1, MBEDTLS_SSL_BUFFER_LEN );
             if( ssl->compress_buf == NULL )
             {
                 MBEDTLS_SSL_DEBUG_MSG( 1, ( "alloc(%d bytes) failed",
@@ -2474,14 +2474,14 @@ static int ssl_flight_append( mbedtls_ssl_context *ssl )
     mbedtls_ssl_flight_item *msg;
 
     /* Allocate space for current message */
-    if( ( msg = (mbedtls_ssl_flight_item *)mbedtls_calloc( 1, sizeof(  mbedtls_ssl_flight_item ) ) ) == NULL )
+    if( ( msg = mbedtls_calloc( 1, sizeof(  mbedtls_ssl_flight_item ) ) ) == NULL )
     {
         MBEDTLS_SSL_DEBUG_MSG( 1, ( "alloc %d bytes failed",
                             sizeof( mbedtls_ssl_flight_item ) ) );
         return( MBEDTLS_ERR_SSL_ALLOC_FAILED );
     }
 
-    if( ( msg->p = (unsigned char *)mbedtls_calloc( 1, ssl->out_msglen ) ) == NULL )
+    if( ( msg->p = mbedtls_calloc( 1, ssl->out_msglen ) ) == NULL )
     {
         MBEDTLS_SSL_DEBUG_MSG( 1, ( "alloc %d bytes failed", ssl->out_msglen ) );
         mbedtls_free( msg );
@@ -2953,7 +2953,7 @@ static int ssl_reassemble_dtls_handshake( mbedtls_ssl_context *ssl )
         /* The bitmask needs one bit per byte of message excluding header */
         alloc_len = 12 + msg_len + msg_len / 8 + ( msg_len % 8 != 0 );
 
-        ssl->handshake->hs_msg = (unsigned char *)mbedtls_calloc( 1, alloc_len );
+        ssl->handshake->hs_msg = mbedtls_calloc( 1, alloc_len );
         if( ssl->handshake->hs_msg == NULL )
         {
             MBEDTLS_SSL_DEBUG_MSG( 1, ( "alloc failed (%d bytes)", alloc_len ) );
@@ -5939,27 +5939,27 @@ static int ssl_append_key_cert( mbedtls_ssl_key_cert **head,
                                 mbedtls_x509_crt *cert,
                                 mbedtls_pk_context *key )
 {
-    mbedtls_ssl_key_cert *new_cert;
+    mbedtls_ssl_key_cert *newo;
 
-    new_cert = (mbedtls_ssl_key_cert *)mbedtls_calloc( 1, sizeof( mbedtls_ssl_key_cert ) );
-    if( new_cert == NULL )
+    newo = (mbedtls_ssl_key_cert *)mbedtls_calloc( 1, sizeof( mbedtls_ssl_key_cert ) );
+    if( newo == NULL )
         return( MBEDTLS_ERR_SSL_ALLOC_FAILED );
 
-    new_cert->cert = cert;
-    new_cert->key  = key;
-    new_cert->next = NULL;
+    newo->cert = cert;
+    newo->key  = key;
+    newo->next = NULL;
 
     /* Update head is the list was null, else add to the end */
     if( *head == NULL )
     {
-        *head = new_cert;
+        *head = newo;
     }
     else
     {
         mbedtls_ssl_key_cert *cur = *head;
         while( cur->next != NULL )
             cur = cur->next;
-        cur->next = new_cert;
+        cur->next = newo;
     }
 
     return( 0 );

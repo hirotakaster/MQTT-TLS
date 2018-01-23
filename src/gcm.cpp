@@ -79,7 +79,7 @@
 
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = (unsigned char *)v; while( n-- ) *p++ = 0;
 }
 
 /*
@@ -277,8 +277,10 @@ int mbedtls_gcm_starts( mbedtls_gcm_context *ctx,
     size_t use_len, olen = 0;
 
     /* IV and AD are limited to 2^64 bits, so 2^61 bytes */
-    if( ( (uint64_t) iv_len  ) >> 61 != 0 ||
-        ( (uint64_t) add_len ) >> 61 != 0 )
+    /* IV is not allowed to be zero length */
+    if( iv_len == 0 ||
+      ( (uint64_t) iv_len  ) >> 61 != 0 ||
+      ( (uint64_t) add_len ) >> 61 != 0 )
     {
         return( MBEDTLS_ERR_GCM_BAD_INPUT );
     }

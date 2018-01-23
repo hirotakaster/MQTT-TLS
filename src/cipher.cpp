@@ -858,7 +858,7 @@ int mbedtls_cipher_auth_encrypt( mbedtls_cipher_context_t *ctx,
     if( MBEDTLS_MODE_CCM == ctx->cipher_info->mode )
     {
         *olen = ilen;
-        return( mbedtls_ccm_encrypt_and_tag( (mbedtls_ccm_context *)ctx->cipher_ctx, ilen,
+        return( mbedtls_ccm_encrypt_and_tag( ctx->cipher_ctx, ilen,
                                      iv, iv_len, ad, ad_len, input, output,
                                      tag, tag_len ) );
     }
@@ -899,7 +899,7 @@ int mbedtls_cipher_auth_decrypt( mbedtls_cipher_context_t *ctx,
         int ret;
 
         *olen = ilen;
-        ret = mbedtls_ccm_auth_decrypt( (mbedtls_ccm_context *)ctx->cipher_ctx, ilen,
+        ret = mbedtls_ccm_auth_decrypt( ctx->cipher_ctx, ilen,
                                 iv, iv_len, ad, ad_len,
                                 input, output, tag, tag_len );
 

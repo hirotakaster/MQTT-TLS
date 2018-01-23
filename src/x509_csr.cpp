@@ -62,7 +62,7 @@
 
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = (unsigned char *)v; while( n-- ) *p++ = 0;
 }
 
 /*
@@ -168,13 +168,13 @@ int mbedtls_x509_csr_parse_der( mbedtls_x509_csr *csr,
         return( ret );
     }
 
-    csr->version++;
-
-    if( csr->version != 1 )
+    if( csr->version != 0 )
     {
         mbedtls_x509_csr_free( csr );
         return( MBEDTLS_ERR_X509_UNKNOWN_VERSION );
     }
+
+    csr->version++;
 
     /*
      *  subject               Name

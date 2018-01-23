@@ -74,7 +74,7 @@
 
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = (unsigned char *)v; while( n-- ) *p++ = 0;
 }
 
 #if defined(MBEDTLS_SELF_TEST)
@@ -1128,7 +1128,7 @@ static int ecp_randomize_jac( const mbedtls_ecp_group *grp, mbedtls_ecp_point *p
     /* Generate l such that 1 < l < p */
     do
     {
-        mbedtls_mpi_fill_random( &l, p_size, f_rng, p_rng );
+        MBEDTLS_MPI_CHK( mbedtls_mpi_fill_random( &l, p_size, f_rng, p_rng ) );
 
         while( mbedtls_mpi_cmp_mpi( &l, &grp->P ) >= 0 )
             MBEDTLS_MPI_CHK( mbedtls_mpi_shift_r( &l, 1 ) );
@@ -1409,7 +1409,7 @@ static int ecp_mul_comb( mbedtls_ecp_group *grp, mbedtls_ecp_point *R,
 
     if( T == NULL )
     {
-        T = (mbedtls_ecp_point *)mbedtls_calloc( pre_len, sizeof( mbedtls_ecp_point ) );
+        T = (mbedtls_ecp_point *) mbedtls_calloc( pre_len, sizeof( mbedtls_ecp_point ) );
         if( T == NULL )
         {
             ret = MBEDTLS_ERR_ECP_ALLOC_FAILED;
@@ -1527,7 +1527,7 @@ static int ecp_randomize_mxz( const mbedtls_ecp_group *grp, mbedtls_ecp_point *P
     /* Generate l such that 1 < l < p */
     do
     {
-        mbedtls_mpi_fill_random( &l, p_size, f_rng, p_rng );
+        MBEDTLS_MPI_CHK( mbedtls_mpi_fill_random( &l, p_size, f_rng, p_rng ) );
 
         while( mbedtls_mpi_cmp_mpi( &l, &grp->P ) >= 0 )
             MBEDTLS_MPI_CHK( mbedtls_mpi_shift_r( &l, 1 ) );
@@ -1690,11 +1690,6 @@ int mbedtls_ecp_mul( mbedtls_ecp_group *grp, mbedtls_ecp_point *R,
         return( ret );
 
 #if defined(MBEDTLS_ECP_INTERNAL_ALT)
-#if defined(MBEDTLS_THREADING_C)
-    if( mbedtls_mutex_lock( &mbedtls_threading_ecp_mutex ) != 0 )
-        return ( MBEDTLS_ERR_THREADING_MUTEX_ERROR );
-
-#endif
     if ( is_grp_capable = mbedtls_internal_ecp_grp_capable( grp )  )
     {
         MBEDTLS_MPI_CHK( mbedtls_internal_ecp_init( grp ) );
@@ -1719,11 +1714,6 @@ cleanup:
         mbedtls_internal_ecp_free( grp );
     }
 
-#if defined(MBEDTLS_THREADING_C)
-    if( mbedtls_mutex_unlock( &mbedtls_threading_ecp_mutex ) != 0 )
-        return ( MBEDTLS_ERR_THREADING_MUTEX_ERROR );
-
-#endif
 #endif /* MBEDTLS_ECP_INTERNAL_ALT */
     return( ret );
 }
@@ -1831,11 +1821,6 @@ int mbedtls_ecp_muladd( mbedtls_ecp_group *grp, mbedtls_ecp_point *R,
     MBEDTLS_MPI_CHK( mbedtls_ecp_mul_shortcuts( grp, R,   n, Q ) );
 
 #if defined(MBEDTLS_ECP_INTERNAL_ALT)
-#if defined(MBEDTLS_THREADING_C)
-    if( mbedtls_mutex_lock( &mbedtls_threading_ecp_mutex ) != 0 )
-        return ( MBEDTLS_ERR_THREADING_MUTEX_ERROR );
-
-#endif
     if (  is_grp_capable = mbedtls_internal_ecp_grp_capable( grp )  )
     {
         MBEDTLS_MPI_CHK( mbedtls_internal_ecp_init( grp ) );
@@ -1853,11 +1838,6 @@ cleanup:
         mbedtls_internal_ecp_free( grp );
     }
 
-#if defined(MBEDTLS_THREADING_C)
-    if( mbedtls_mutex_unlock( &mbedtls_threading_ecp_mutex ) != 0 )
-        return ( MBEDTLS_ERR_THREADING_MUTEX_ERROR );
-
-#endif
 #endif /* MBEDTLS_ECP_INTERNAL_ALT */
     mbedtls_ecp_point_free( &mP );
 

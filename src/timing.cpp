@@ -37,12 +37,12 @@
 #include "timing.h"
 
 #if !defined(MBEDTLS_TIMING_ALT)
-/*
-#if !defined(unix) && !defined(__unix__) && !defined(__unix) && \
+
+#if !defined(unix) && !defined(g) && !defined(__unix) && \
     !defined(__APPLE__) && !defined(_WIN32)
-#error "This module only works on Unix and Windows, see MBEDTLS_TIMING_C in config.h"
+// #error "This module only works on Unix and Windows, see MBEDTLS_TIMING_C in config.h"
 #endif
-*/
+
 #ifndef asm
 #define asm __asm
 #endif
@@ -219,6 +219,23 @@ unsigned long mbedtls_timing_hardclock( void )
 
 #define HAVE_HARDCLOCK
 
+// todo - would prefer this was provided as a callback.
+/*
+extern "C" unsigned long mbedtls_timing_hardclock()
+{
+    return HAL_Timer_Microseconds();
+}
+*/
+#include "timer_hal.h"
+extern "C" int _gettimeofday( struct timeval *tv, void *tzvp )
+{
+    uint32_t t = HAL_Timer_Milliseconds();  // get uptime in nanoseconds
+    tv->tv_sec = t / 1000;  // convert to seconds
+    tv->tv_usec = ( t % 1000 )*1000;  // get remaining microseconds
+    return 0;  // return non-zero for error
+} // end _gettimeofday()
+
+
 static int hardclock_init = 0;
 static struct timeval tv_init;
 
@@ -228,11 +245,11 @@ unsigned long mbedtls_timing_hardclock( void )
 
     if( hardclock_init == 0 )
     {
-        gettimeofday( &tv_init, NULL );
+        _gettimeofday( &tv_init, NULL );
         hardclock_init = 1;
     }
 
-    gettimeofday( &tv_cur, NULL );
+    _gettimeofday( &tv_cur, NULL );
     return( ( tv_cur.tv_sec  - tv_init.tv_sec  ) * 1000000
           + ( tv_cur.tv_usec - tv_init.tv_usec ) );
 }
@@ -289,7 +306,7 @@ unsigned long mbedtls_timing_get_timer( struct mbedtls_timing_hr_time *val, int 
     struct timeval offset;
     struct _hr_time *t = (struct _hr_time *) val;
 
-    gettimeofday( &offset, NULL );
+    _gettimeofday( &offset, NULL );
 
     if( reset )
     {
@@ -521,22 +538,5 @@ hard_test_done:
 }
 
 #endif /* MBEDTLS_SELF_TEST */
-
-#include "timer_hal.h"
-/*
-extern "C" unsigned long mbedtls_timing_hardclock()
-{
-    return HAL_Timer_Microseconds();
-}
-*/
-
-// todo - would prefer this was provided as a callback.
-extern "C" int _gettimeofday( struct timeval *tv, void *tzvp )
-{
-    uint32_t t = HAL_Timer_Milliseconds();  // get uptime in nanoseconds
-    tv->tv_sec = t / 1000;  // convert to seconds
-    tv->tv_usec = ( t % 1000 )*1000;  // get remaining microseconds
-    return 0;  // return non-zero for error
-} // end _gettimeofday()
 
 #endif /* MBEDTLS_TIMING_C */

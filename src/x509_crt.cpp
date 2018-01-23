@@ -49,6 +49,7 @@
 
 #if defined(MBEDTLS_PLATFORM_C)
 #include "platform.h"
+
 #else
 #include <stdlib.h>
 #define mbedtls_free       free
@@ -71,13 +72,13 @@
 #if !defined(_WIN32) || defined(EFIX64) || defined(EFI32)
 #include <sys/types.h>
 #include <sys/stat.h>
-// #include <dirent.h>
+#include <dirent.h>
 #endif /* !_WIN32 || EFIX64 || EFI32 */
 #endif
 
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = (unsigned char *)v; while( n-- ) *p++ = 0;
 }
 
 /*
@@ -707,7 +708,7 @@ static int x509_crt_parse_der_core( mbedtls_x509_crt *crt, const unsigned char *
 
     // Create and populate a new buffer for the raw field
     crt->raw.len = crt_end - buf;
-    crt->raw.p = p = (unsigned char *)mbedtls_calloc( 1, crt->raw.len );
+    crt->raw.p = p = (unsigned char*)mbedtls_calloc( 1, crt->raw.len );
     if( p == NULL )
         return( MBEDTLS_ERR_X509_ALLOC_FAILED );
 
@@ -748,13 +749,13 @@ static int x509_crt_parse_der_core( mbedtls_x509_crt *crt, const unsigned char *
         return( ret );
     }
 
-    crt->version++;
-
-    if( crt->version > 3 )
+    if( crt->version < 0 || crt->version > 2 )
     {
         mbedtls_x509_crt_free( crt );
         return( MBEDTLS_ERR_X509_UNKNOWN_VERSION );
     }
+
+    crt->version++;
 
     if( ( ret = mbedtls_x509_get_sig_alg( &crt->sig_oid, &sig_params1,
                                   &crt->sig_md, &crt->sig_pk,
@@ -790,6 +791,7 @@ static int x509_crt_parse_der_core( mbedtls_x509_crt *crt, const unsigned char *
      *      notAfter       Time }
      *
      */
+
     if( ( ret = x509_get_dates( &p, end, &crt->valid_from,
                                          &crt->valid_to ) ) != 0 )
     {
@@ -1146,7 +1148,10 @@ int mbedtls_x509_crt_parse_path( mbedtls_x509_crt *chain, const char *path )
                                      p, (int) len - 1,
                                      NULL, NULL );
         if( w_ret == 0 )
-            return( MBEDTLS_ERR_X509_FILE_IO_ERROR );
+        {
+            ret = MBEDTLS_ERR_X509_FILE_IO_ERROR;
+            goto cleanup;
+        }
 
         w_ret = mbedtls_x509_crt_parse_file( chain, filename );
         if( w_ret < 0 )
@@ -1159,9 +1164,9 @@ int mbedtls_x509_crt_parse_path( mbedtls_x509_crt *chain, const char *path )
     if( GetLastError() != ERROR_NO_MORE_FILES )
         ret = MBEDTLS_ERR_X509_FILE_IO_ERROR;
 
+cleanup:
     FindClose( hFind );
 #else /* _WIN32 */
-    /*
     int t_ret;
     int snp_ret;
     struct stat sb;
@@ -1171,16 +1176,15 @@ int mbedtls_x509_crt_parse_path( mbedtls_x509_crt *chain, const char *path )
 
     if( dir == NULL )
         return( MBEDTLS_ERR_X509_FILE_IO_ERROR );
-    */
 
-#if defined(MBEDTLS_THREADING_PTHREAD)
+#if defined(MBEDTLS_THREADING_C)
     if( ( ret = mbedtls_mutex_lock( &mbedtls_threading_readdir_mutex ) ) != 0 )
     {
         closedir( dir );
         return( ret );
     }
-#endif
-    /*
+#endif /* MBEDTLS_THREADING_C */
+
     while( ( entry = readdir( dir ) ) != NULL )
     {
         snp_ret = mbedtls_snprintf( entry_name, sizeof entry_name,
@@ -1208,15 +1212,14 @@ int mbedtls_x509_crt_parse_path( mbedtls_x509_crt *chain, const char *path )
         else
             ret += t_ret;
     }
-    */
 
 cleanup:
-    // closedir( dir );
+    closedir( dir );
 
-#if defined(MBEDTLS_THREADING_PTHREAD)
+#if defined(MBEDTLS_THREADING_C)
     if( mbedtls_mutex_unlock( &mbedtls_threading_readdir_mutex ) != 0 )
         ret = MBEDTLS_ERR_THREADING_MUTEX_ERROR;
-#endif
+#endif /* MBEDTLS_THREADING_C */
 
 #endif /* _WIN32 */
 
@@ -1728,7 +1731,7 @@ static int x509_memcasecmp( const void *s1, const void *s2, size_t len )
 {
     size_t i;
     unsigned char diff;
-    const unsigned char *n1 = (const unsigned char *)s1, *n2 = (const unsigned char *)s2;
+    const unsigned char *n1 = (unsigned char *)s1, *n2 = (unsigned char *)s2;
 
     for( i = 0; i < len; i++ )
     {
@@ -1911,6 +1914,8 @@ static int x509_crt_verify_top(
     const mbedtls_md_info_t *md_info;
     mbedtls_x509_crt *future_past_ca = NULL;
 
+    int retval = 0;
+
     if( mbedtls_x509_time_is_past( &child->valid_to ) )
         *flags |= MBEDTLS_X509_BADCERT_EXPIRED;
 
@@ -1941,11 +1946,11 @@ static int x509_crt_verify_top(
 
     for( /* trust_ca */ ; trust_ca != NULL; trust_ca = trust_ca->next )
     {
-        if( x509_crt_check_parent( child, trust_ca, 1, path_cnt == 0 ) != 0 )
+        if( x509_crt_check_parent( child, trust_ca, 1, path_cnt == 0 ) != 0 ) {
             continue;
+        }
 
         check_path_cnt = path_cnt + 1;
-
         /*
          * Reduce check_path_cnt to check against if top of the chain is
          * the same as the trusted CA
@@ -1964,9 +1969,9 @@ static int x509_crt_verify_top(
             continue;
         }
 
-        if( mbedtls_pk_verify_ext( child->sig_pk, child->sig_opts, &trust_ca->pk,
+        if( (retval = mbedtls_pk_verify_ext( child->sig_pk, child->sig_opts, &trust_ca->pk,
                            child->sig_md, hash, mbedtls_md_get_size( md_info ),
-                           child->sig.p, child->sig.len ) != 0 )
+                           child->sig.p, child->sig.len )) != 0 )
         {
             continue;
         }
@@ -1976,7 +1981,6 @@ static int x509_crt_verify_top(
         {
             if ( future_past_ca == NULL )
                 future_past_ca = trust_ca;
-
             continue;
         }
 
@@ -2060,8 +2064,8 @@ static int x509_crt_verify_child(
     /* path_cnt is 0 for the first intermediate CA */
     if( 1 + path_cnt > MBEDTLS_X509_MAX_INTERMEDIATE_CA )
     {
-        *flags |= MBEDTLS_X509_BADCERT_NOT_TRUSTED;
-        return( MBEDTLS_ERR_X509_CERT_VERIFY_FAILED );
+        /* return immediately as the goal is to avoid unbounded recursion */
+        return( MBEDTLS_ERR_X509_FATAL_ERROR );
     }
 
     if( mbedtls_x509_time_is_past( &child->valid_to ) )
@@ -2189,6 +2193,7 @@ int mbedtls_x509_crt_verify( mbedtls_x509_crt *crt,
 /*
  * Verify the certificate validity, with profile
  */
+#include "application.h"
 int mbedtls_x509_crt_verify_with_profile( mbedtls_x509_crt *crt,
                      mbedtls_x509_crt *trust_ca,
                      mbedtls_x509_crl *ca_crl,
@@ -2205,10 +2210,13 @@ int mbedtls_x509_crt_verify_with_profile( mbedtls_x509_crt *crt,
     mbedtls_x509_sequence *cur = NULL;
     mbedtls_pk_type_t pk_type;
 
-    if( profile == NULL )
-        return( MBEDTLS_ERR_X509_BAD_INPUT_DATA );
-
     *flags = 0;
+
+    if( profile == NULL )
+    {
+        ret = MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+        goto exit;
+    }
 
     if( cn != NULL )
     {
@@ -2235,8 +2243,9 @@ int mbedtls_x509_crt_verify_with_profile( mbedtls_x509_crt *crt,
                 cur = cur->next;
             }
 
-            if( cur == NULL )
+            if( cur == NULL ) {
                 *flags |= MBEDTLS_X509_BADCERT_CN_MISMATCH;
+            }
         }
         else
         {
@@ -2257,19 +2266,22 @@ int mbedtls_x509_crt_verify_with_profile( mbedtls_x509_crt *crt,
                 name = name->next;
             }
 
-            if( name == NULL )
+            if( name == NULL ) {
                 *flags |= MBEDTLS_X509_BADCERT_CN_MISMATCH;
+            }
         }
     }
 
     /* Check the type and size of the key */
     pk_type = mbedtls_pk_get_type( &crt->pk );
 
-    if( x509_profile_check_pk_alg( profile, pk_type ) != 0 )
+    if( x509_profile_check_pk_alg( profile, pk_type ) != 0 ) {
         *flags |= MBEDTLS_X509_BADCERT_BAD_PK;
+    }
 
-    if( x509_profile_check_key( profile, pk_type, &crt->pk ) != 0 )
+    if( x509_profile_check_key( profile, pk_type, &crt->pk ) != 0 ) {
         *flags |= MBEDTLS_X509_BADCERT_BAD_KEY;
+    }
 
     /* Look for a parent in trusted CAs */
     for( parent = trust_ca; parent != NULL; parent = parent->next )
@@ -2283,7 +2295,7 @@ int mbedtls_x509_crt_verify_with_profile( mbedtls_x509_crt *crt,
         ret = x509_crt_verify_top( crt, parent, ca_crl, profile,
                                    pathlen, selfsigned, flags, f_vrfy, p_vrfy );
         if( ret != 0 )
-            return( ret );
+            goto exit;
     }
     else
     {
@@ -2298,19 +2310,33 @@ int mbedtls_x509_crt_verify_with_profile( mbedtls_x509_crt *crt,
             ret = x509_crt_verify_child( crt, parent, trust_ca, ca_crl, profile,
                                          pathlen, selfsigned, flags, f_vrfy, p_vrfy );
             if( ret != 0 )
-                return( ret );
+                goto exit;
         }
         else
         {
             ret = x509_crt_verify_top( crt, trust_ca, ca_crl, profile,
                                        pathlen, selfsigned, flags, f_vrfy, p_vrfy );
             if( ret != 0 )
-                return( ret );
+                goto exit;
         }
     }
 
-    if( *flags != 0 )
+exit:
+    /* prevent misuse of the vrfy callback - VERIFY_FAILED would be ignored by
+     * the SSL module for authmode optional, but non-zero return from the
+     * callback means a fatal error so it shouldn't be ignored */
+    if( ret == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED )
+        ret = MBEDTLS_ERR_X509_FATAL_ERROR;
+
+    if( ret != 0 )
+    {
+        *flags = (uint32_t) -1;
+        return( ret );
+    }
+
+    if( *flags != 0 ) {
         return( MBEDTLS_ERR_X509_CERT_VERIFY_FAILED );
+    }
 
     return( 0 );
 }
