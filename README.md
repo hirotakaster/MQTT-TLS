@@ -14,7 +14,7 @@ Some sample sketches for Spark Core and Photon included(firmware/examples/).
  
 ```C++
 
-#include "MQTT-TLS/MQTT-TLS.h"
+#include "MQTT-TLS.h"
 
 void callback(char* topic, byte* payload, unsigned int length);
 
@@ -60,7 +60,7 @@ const char letencryptCaPem[] = LET_ENCRYPT_CA_PEM;
  * want to use domain name,
  * MQTT client("www.sample.com", 1883, callback);
  **/
-MQTT client("www.sample.com", 443, callback);
+MQTT client("iot.eclipse.org", 8883, callback);
 
 // recieve message
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -90,7 +90,7 @@ void setup() {
 
     RGB.control(true);
 
-    // enable tls. set Root CA pem file. 
+    // enable tls. set Root CA pem file.
     // if you don't use TLS, comment out this line.
     client.enableTls(letencryptCaPem, sizeof(letencryptCaPem));
     Serial.println("tls enable");
@@ -111,4 +111,5 @@ void loop() {
         client.loop();
     delay(200);
 }
+
 ```
