@@ -59,6 +59,7 @@ const char letencryptCaPem[] = LET_ENCRYPT_CA_PEM;
  * MQTT client(server, 1883, callback);
  * want to use domain name,
  * MQTT client("www.sample.com", 1883, callback);
+ * iot.eclipse.org is Eclipse Open MQTT Broker: https://iot.eclipse.org/getting-started
  **/
 MQTT client("iot.eclipse.org", 8883, callback);
 
