@@ -182,20 +182,24 @@ cleanup:
  */
 int mbedtls_rsa_check_pubkey( const mbedtls_rsa_context *ctx )
 {
-    if( !ctx->N.p || !ctx->E.p )
+    if( !ctx->N.p || !ctx->E.p ) {
         return( MBEDTLS_ERR_RSA_KEY_CHECK_FAILED );
+    }
 
     if( ( ctx->N.p[0] & 1 ) == 0 ||
-        ( ctx->E.p[0] & 1 ) == 0 )
+        ( ctx->E.p[0] & 1 ) == 0 ) {
         return( MBEDTLS_ERR_RSA_KEY_CHECK_FAILED );
+    }
 
     if( mbedtls_mpi_bitlen( &ctx->N ) < 128 ||
-        mbedtls_mpi_bitlen( &ctx->N ) > MBEDTLS_MPI_MAX_BITS )
+        mbedtls_mpi_bitlen( &ctx->N ) > MBEDTLS_MPI_MAX_BITS ) {
         return( MBEDTLS_ERR_RSA_KEY_CHECK_FAILED );
+    }
 
     if( mbedtls_mpi_bitlen( &ctx->E ) < 2 ||
-        mbedtls_mpi_cmp_mpi( &ctx->E, &ctx->N ) >= 0 )
+        mbedtls_mpi_cmp_mpi( &ctx->E, &ctx->N ) >= 0 ) {
         return( MBEDTLS_ERR_RSA_KEY_CHECK_FAILED );
+    }
 
     return( 0 );
 }
@@ -211,8 +215,9 @@ int mbedtls_rsa_check_privkey( const mbedtls_rsa_context *ctx )
     if( ( ret = mbedtls_rsa_check_pubkey( ctx ) ) != 0 )
         return( ret );
 
-    if( !ctx->P.p || !ctx->Q.p || !ctx->D.p )
+    if( !ctx->P.p || !ctx->Q.p || !ctx->D.p ) {
         return( MBEDTLS_ERR_RSA_KEY_CHECK_FAILED );
+    }
 
     mbedtls_mpi_init( &PQ ); mbedtls_mpi_init( &DE ); mbedtls_mpi_init( &P1 ); mbedtls_mpi_init( &Q1 );
     mbedtls_mpi_init( &H  ); mbedtls_mpi_init( &I  ); mbedtls_mpi_init( &G  ); mbedtls_mpi_init( &G2 );
@@ -253,11 +258,13 @@ cleanup:
     mbedtls_mpi_free( &L1 ); mbedtls_mpi_free( &L2 ); mbedtls_mpi_free( &DP ); mbedtls_mpi_free( &DQ );
     mbedtls_mpi_free( &QP );
 
-    if( ret == MBEDTLS_ERR_RSA_KEY_CHECK_FAILED )
+    if( ret == MBEDTLS_ERR_RSA_KEY_CHECK_FAILED ) {
         return( ret );
+    }
 
-    if( ret != 0 )
+    if( ret != 0 ) {
         return( MBEDTLS_ERR_RSA_KEY_CHECK_FAILED + ret );
+    }
 
     return( 0 );
 }
@@ -292,6 +299,7 @@ int mbedtls_rsa_public( mbedtls_rsa_context *ctx,
     int ret;
     size_t olen;
     mbedtls_mpi T;
+
 
     mbedtls_mpi_init( &T );
 

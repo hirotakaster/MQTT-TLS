@@ -373,7 +373,7 @@ mbedtls_asn1_named_data *mbedtls_asn1_store_named_data( mbedtls_asn1_named_data 
          * Preserve old data until the allocation succeeded, to leave list in
          * a consistent state in case allocation fails.
          */
-        void *p = (unsigned char *)mbedtls_calloc( 1, val_len );
+        void *p = mbedtls_calloc( 1, val_len );
         if( p == NULL )
             return( NULL );
 

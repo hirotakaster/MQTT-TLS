@@ -50,7 +50,7 @@
 #if defined(MBEDTLS_SSL_SESSION_TICKETS)
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = (unsigned char *)v; while( n-- ) *p++ = 0;
 }
 #endif
 
@@ -393,7 +393,7 @@ static void ssl_write_ecjpake_kkpp_ext( mbedtls_ssl_context *ssl,
             return;
         }
 
-        ssl->handshake->ecjpake_cache = (unsigned char *)mbedtls_calloc( 1, kkpp_len );
+        ssl->handshake->ecjpake_cache = mbedtls_calloc( 1, kkpp_len );
         if( ssl->handshake->ecjpake_cache == NULL )
         {
             MBEDTLS_SSL_DEBUG_MSG( 1, ( "allocation failed" ) );
@@ -1403,7 +1403,7 @@ static int ssl_parse_hello_verify_request( mbedtls_ssl_context *ssl )
 
     mbedtls_free( ssl->handshake->verify_cookie );
 
-    ssl->handshake->verify_cookie = (unsigned char *)mbedtls_calloc( 1, cookie_len );
+    ssl->handshake->verify_cookie = mbedtls_calloc( 1, cookie_len );
     if( ssl->handshake->verify_cookie  == NULL )
     {
         MBEDTLS_SSL_DEBUG_MSG( 1, ( "alloc failed (%d bytes)", cookie_len ) );

@@ -77,7 +77,7 @@
 /* shared by all GCM ciphers */
 static void *gcm_ctx_alloc( void )
 {
-    void *ctx = (mbedtls_gcm_context *)mbedtls_calloc( 1, sizeof( mbedtls_gcm_context ) );
+    void *ctx = mbedtls_calloc( 1, sizeof( mbedtls_gcm_context ) );
 
     if( ctx != NULL )
         mbedtls_gcm_init( (mbedtls_gcm_context *) ctx );
@@ -96,7 +96,7 @@ static void gcm_ctx_free( void *ctx )
 /* shared by all CCM ciphers */
 static void *ccm_ctx_alloc( void )
 {
-    void *ctx = (mbedtls_ccm_context *)mbedtls_calloc( 1, sizeof( mbedtls_ccm_context ) );
+    void *ctx = mbedtls_calloc( 1, sizeof( mbedtls_ccm_context ) );
 
     if( ctx != NULL )
         mbedtls_ccm_init( (mbedtls_ccm_context *) ctx );
@@ -519,7 +519,7 @@ static int camellia_setkey_enc_wrap( void *ctx, const unsigned char *key,
 static void * camellia_ctx_alloc( void )
 {
     mbedtls_camellia_context *ctx;
-    ctx = (mbedtls_camellia_context *)mbedtls_calloc( 1, sizeof( mbedtls_camellia_context ) );
+    ctx = mbedtls_calloc( 1, sizeof( mbedtls_camellia_context ) );
 
     if( ctx == NULL )
         return( NULL );
@@ -1124,7 +1124,7 @@ static int blowfish_setkey_wrap( void *ctx, const unsigned char *key,
 static void * blowfish_ctx_alloc( void )
 {
     mbedtls_blowfish_context *ctx;
-    ctx = (mbedtls_blowfish_context *)mbedtls_calloc( 1, sizeof( mbedtls_blowfish_context ) );
+    ctx = mbedtls_calloc( 1, sizeof( mbedtls_blowfish_context ) );
 
     if( ctx == NULL )
         return( NULL );
@@ -1234,7 +1234,7 @@ static int arc4_setkey_wrap( void *ctx, const unsigned char *key,
 static void * arc4_ctx_alloc( void )
 {
     mbedtls_arc4_context *ctx;
-    ctx = (mbedtls_arc4_context *)mbedtls_calloc( 1, sizeof( mbedtls_arc4_context ) );
+    ctx = mbedtls_calloc( 1, sizeof( mbedtls_arc4_context ) );
 
     if( ctx == NULL )
         return( NULL );

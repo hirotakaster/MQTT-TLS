@@ -44,7 +44,7 @@
 
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = v; while( n-- ) *p++ = 0;
 }
 
 #define MAGIC1       0xFF00AA55
@@ -656,9 +656,9 @@ int mbedtls_memory_buffer_alloc_self_test( int verbose )
 
     mbedtls_memory_buffer_alloc_init( buf, sizeof( buf ) );
 
-    p = (unsigned char *)mbedtls_calloc( 1, 1 );
-    q = (unsigned char *)mbedtls_calloc( 1, 128 );
-    r = (unsigned char *)mbedtls_calloc( 1, 16 );
+    p = mbedtls_calloc( 1, 1 );
+    q = mbedtls_calloc( 1, 128 );
+    r = mbedtls_calloc( 1, 16 );
 
     TEST_ASSERT( check_pointer( p ) == 0 &&
                  check_pointer( q ) == 0 &&
@@ -685,9 +685,9 @@ int mbedtls_memory_buffer_alloc_self_test( int verbose )
 
     TEST_ASSERT( heap.buf + heap.len == end );
 
-    p = (unsigned char *)mbedtls_calloc( 1, 1 );
-    q = (unsigned char *)mbedtls_calloc( 1, 128 );
-    r = (unsigned char *)mbedtls_calloc( 1, 16 );
+    p = mbedtls_calloc( 1, 1 );
+    q = mbedtls_calloc( 1, 128 );
+    r = mbedtls_calloc( 1, 16 );
 
     TEST_ASSERT( check_pointer( p ) == 0 &&
                  check_pointer( q ) == 0 &&
@@ -709,15 +709,15 @@ int mbedtls_memory_buffer_alloc_self_test( int verbose )
 
     mbedtls_memory_buffer_alloc_init( buf, sizeof( buf ) );
 
-    p = (unsigned char *)mbedtls_calloc( 1, sizeof( buf ) - sizeof( memory_header ) );
+    p = mbedtls_calloc( 1, sizeof( buf ) - sizeof( memory_header ) );
 
     TEST_ASSERT( check_pointer( p ) == 0 );
     TEST_ASSERT( mbedtls_calloc( 1, 1 ) == NULL );
 
     mbedtls_free( p );
 
-    p = (unsigned char *)mbedtls_calloc( 1, sizeof( buf ) - 2 * sizeof( memory_header ) - 16 );
-    q = (unsigned char *)mbedtls_calloc( 1, 16 );
+    p = mbedtls_calloc( 1, sizeof( buf ) - 2 * sizeof( memory_header ) - 16 );
+    q = mbedtls_calloc( 1, 16 );
 
     TEST_ASSERT( check_pointer( p ) == 0 && check_pointer( q ) == 0 );
     TEST_ASSERT( mbedtls_calloc( 1, 1 ) == NULL );

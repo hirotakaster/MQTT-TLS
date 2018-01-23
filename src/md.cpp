@@ -50,7 +50,7 @@
 
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = (unsigned char *)v; while( n-- ) *p++ = 0;
 }
 
 /*
@@ -232,7 +232,7 @@ int mbedtls_md_setup( mbedtls_md_context_t *ctx, const mbedtls_md_info_t *md_inf
 
     if( hmac != 0 )
     {
-        ctx->hmac_ctx = (unsigned char *)mbedtls_calloc( 2, md_info->block_size );
+        ctx->hmac_ctx = mbedtls_calloc( 2, md_info->block_size );
         if( ctx->hmac_ctx == NULL )
         {
             md_info->ctx_free_func( ctx->md_ctx );

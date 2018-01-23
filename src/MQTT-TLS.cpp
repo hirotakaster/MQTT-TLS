@@ -59,18 +59,18 @@ void MQTT::addQosCallback(void (*qoscallback)(unsigned int)) {
 }
 
 bool MQTT::connect(const char *id) {
-    return connect(id,NULL,NULL,0,QOS0,0,0);
+    return connect(id,NULL,NULL,0,QOS0,0,0,true,MQTT_V311);
 }
 
 bool MQTT::connect(const char *id, const char *user, const char *pass) {
-    return connect(id,user,pass,0,QOS0,0,0);
+    return connect(id,user,pass,0,QOS0,0,0,true,MQTT_V311);
 }
 
 bool MQTT::connect(const char *id, const char* willTopic, EMQTT_QOS willQos, uint8_t willRetain, const char* willMessage) {
-    return connect(id,NULL,NULL,willTopic,willQos,willRetain,willMessage);
+    return connect(id,NULL,NULL,willTopic,willQos,willRetain,willMessage,true,MQTT_V311);
 }
 
-bool MQTT::connect(const char *id, const char *user, const char *pass, const char* willTopic, EMQTT_QOS willQos, uint8_t willRetain, const char* willMessage) {
+bool MQTT::connect(const char *id, const char *user, const char *pass, const char* willTopic, EMQTT_QOS willQos, uint8_t willRetain, const char* willMessage, bool cleanSession, MQTT_VERSION version) {
     if (!isConnected()) {
         int result = 0;
         if (ip == NULL) {
@@ -92,19 +92,29 @@ bool MQTT::connect(const char *id, const char *user, const char *pass, const cha
 
         if (result) {
             nextMsgId = 1;
-            uint8_t d[9] = {0x00,0x06,'M','Q','I','s','d','p',MQTTPROTOCOLVERSION};
+
             // Leave room in the buffer for header and variable length field
             uint16_t length = 5;
-            unsigned int j;
-            for (j = 0;j<9;j++) {
-                buffer[length++] = d[j];
+            const uint8_t MQTT_HEADER_V31[] = {0x00,0x06,'M','Q','I','s','d','p', MQTT_V31};
+            const uint8_t MQTT_HEADER_V311[] = {0x00,0x04,'M','Q','T','T',MQTT_V311};
+
+            if (version == MQTT_V311) {
+                memcpy(buffer + length, MQTT_HEADER_V311, sizeof(MQTT_HEADER_V311));
+                length+=sizeof(MQTT_HEADER_V311);
+            } else {
+                memcpy(buffer + length, MQTT_HEADER_V31, sizeof(MQTT_HEADER_V31));
+                length+=sizeof(MQTT_HEADER_V31);
             }
 
-            uint8_t v;
+            uint8_t v = 0;
             if (willTopic) {
                 v = 0x06|(willQos<<3)|(willRetain<<5);
             } else {
                 v = 0x02;
+            }
+
+            if (!cleanSession) {
+              v = v&0xfd;
             }
 
             if(user != NULL) {
@@ -138,6 +148,7 @@ bool MQTT::connect(const char *id, const char *user, const char *pass, const cha
             while (!available()) {
                 unsigned long t = millis();
                 if (t-lastInActivity > MQTT_KEEPALIVE*1000UL) {
+                    debug_tls("MQTT connection timeout.\n");
                     disconnect();
                     return false;
                 }
@@ -148,6 +159,7 @@ bool MQTT::connect(const char *id, const char *user, const char *pass, const cha
             if (len == 4 && buffer[3] == 0) {
                 lastInActivity = millis();
                 pingOutstanding = false;
+                debug_tls("MQTT connected.\n");
                 return true;
             }
         }
@@ -580,7 +592,6 @@ int MQTT::enableTls(const char *rootCaPem, const size_t rootCaPemSize,
     mbedtls_ssl_config_init(&conf);
     mbedtls_ssl_init(&ssl);
     mbedtls_x509_crt_init(&cacert);
-    mbedtls_x509_crt_init(&clicert);
     mbedtls_pk_init(&pkey);
 
     mbedtls_ssl_conf_dbg(&conf, &MQTT::debug_Tls, nullptr);
@@ -594,6 +605,7 @@ int MQTT::enableTls(const char *rootCaPem, const size_t rootCaPemSize,
     }
 
     if (clientCertPem != NULL && clientCertPemSize > 0) {
+      mbedtls_x509_crt_init(&clicert);
       if ((ret = mbedtls_x509_crt_parse(&clicert, (const unsigned char *)clientCertPem, clientCertPemSize)) < 0) {
         debug_tls(" tlsClientKey mbedtls_x509_crt_parse error : %d\n", ret);
         return ret;
@@ -630,42 +642,6 @@ int MQTT::enableTls(const char *rootCaPem, const size_t rootCaPemSize,
     mbedtls_ssl_set_timer_cb(&ssl, &timer, mbedtls_timing_set_delay, mbedtls_timing_get_delay);
     mbedtls_ssl_set_bio(&ssl, this, &MQTT::send_Tls,  &MQTT::recv_Tls, nullptr);
     return 0;
-/*
-    int ret;
-    tls = true;
-
-    mbedtls_ssl_config_init(&conf);
-    mbedtls_x509_crt_init(&cacert);
-    mbedtls_ssl_conf_rng(&conf, &MQTT::rng_Tls, nullptr);
-    mbedtls_ssl_conf_dbg(&conf, &MQTT::debug_Tls, nullptr);
-
-    #if defined(MBEDTLS_DEBUG_C)
-      mbedtls_debug_set_threshold(DEBUG_TLS_CORE_LEVEL);
-    #endif
-
-    if ((ret = mbedtls_ssl_config_defaults(&conf, MBEDTLS_SSL_IS_CLIENT,
-                    MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT)) != 0) {
-      return ret;
-    }
-
-    if ((ret = mbedtls_x509_crt_parse(&cacert, (const unsigned char *)rootCaPem, rootCaPemSize)) < 0) {
-      return ret;
-    }
-    mbedtls_ssl_conf_min_version(&conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_ca_chain(&conf, &cacert, nullptr);
-
-    // if server certificates is not valid, connection will success. check certificates on verify() function.
-    mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
-
-    mbedtls_ssl_init(&ssl);
-    if((ret = mbedtls_ssl_setup(&ssl, &conf)) != 0) {
-      return ret;
-    }
-
-    mbedtls_ssl_set_timer_cb(&ssl, &timer, mbedtls_timing_set_delay, mbedtls_timing_get_delay);
-    mbedtls_ssl_set_bio(&ssl, this, &MQTT::send_Tls,  &MQTT::recv_Tls, nullptr);
-    return 0;
-*/
 }
 
 

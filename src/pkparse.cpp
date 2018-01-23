@@ -63,7 +63,7 @@
 #if defined(MBEDTLS_FS_IO)
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = (volatile unsigned char *)v; while( n-- ) *p++ = 0;
+    volatile unsigned char *p = v; while( n-- ) *p++ = 0;
 }
 
 /*
@@ -92,7 +92,7 @@ int mbedtls_pk_load_file( const char *path, unsigned char **buf, size_t *n )
     *n = (size_t) size;
 
     if( *n + 1 == 0 ||
-        ( *buf = (unsigned char *)mbedtls_calloc( 1, *n + 1 ) ) == NULL )
+        ( *buf = mbedtls_calloc( 1, *n + 1 ) ) == NULL )
     {
         fclose( f );
         return( MBEDTLS_ERR_PK_ALLOC_FAILED );

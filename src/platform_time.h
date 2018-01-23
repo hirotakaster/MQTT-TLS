@@ -70,7 +70,7 @@ int mbedtls_platform_set_time( mbedtls_time_t (*time_func)( mbedtls_time_t* time
 #if defined(MBEDTLS_PLATFORM_TIME_MACRO)
 #define mbedtls_time    MBEDTLS_PLATFORM_TIME_MACRO
 #else
-#define mbedtls_time   time
+#define mbedtls_time   time_dddd
 #endif /* MBEDTLS_PLATFORM_TIME_MACRO */
 #endif /* MBEDTLS_PLATFORM_TIME_ALT */
 
