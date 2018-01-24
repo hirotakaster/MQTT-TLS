@@ -226,15 +226,15 @@ extern "C" unsigned long mbedtls_timing_hardclock()
     return HAL_Timer_Microseconds();
 }
 */
+#include "rtc_hal.h"
 #include "timer_hal.h"
 extern "C" int _gettimeofday( struct timeval *tv, void *tzvp )
 {
-    uint32_t t = HAL_Timer_Milliseconds();  // get uptime in nanoseconds
-    tv->tv_sec = t / 1000;  // convert to seconds
-    tv->tv_usec = ( t % 1000 )*1000;  // get remaining microseconds
-    return 0;  // return non-zero for error
+    uint32_t t = HAL_Timer_Milliseconds();  // get uptime
+    tv->tv_sec = HAL_RTC_Get_UnixTime();    // get rtc time before Particle.syncTime()
+    tv->tv_usec = ( t % 1000 )*1000;        // get remaining microseconds
+    return 0;
 } // end _gettimeofday()
-
 
 static int hardclock_init = 0;
 static struct timeval tv_init;
