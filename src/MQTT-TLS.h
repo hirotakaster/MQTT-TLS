@@ -123,10 +123,11 @@ private:
     unsigned long lastOutActivity;
     unsigned long lastInActivity;
     bool pingOutstanding;
-    void (*callback)(char*,uint8_t*,unsigned int);
+    void (*callback)(void*,char*,uint8_t*,unsigned int);
+    void* userData;
     void (*qoscallback)(unsigned int);
     uint16_t readPacket(uint8_t*);
-    uint8_t readByte();
+    int readByte();
     bool write(uint8_t header, uint8_t* buf, uint16_t length);
     uint16_t writeString(const char* string, uint8_t* buf, uint16_t pos);
     String domain;
@@ -134,7 +135,7 @@ private:
     uint16_t port;
     uint16_t maxpacketsize;
 
-    void initialize(char* domain, uint8_t *ip, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize);
+    void initialize(char* domain, uint8_t *ip, uint16_t port, void (*callback)(void*,char*,uint8_t*,unsigned int), void* userData, int maxpacketsize);
     uint16_t netWrite(unsigned char *buff, int length);
     bool available();
 
@@ -160,14 +161,13 @@ private:
     static int veryfyCert_Tls(void *data, mbedtls_x509_crt *crt, int depth, uint32_t *flags);
     int handShakeTls();
 
-
 public:
     MQTT();
 
-    MQTT(char* domain, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int));
-    MQTT(char* domain, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize);
-    MQTT(uint8_t *, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int));
-    MQTT(uint8_t *, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize);
+    MQTT(char* domain, uint16_t port, void (*callback)(void*,char*,uint8_t*,unsigned int));
+    MQTT(char* domain, uint16_t port, void (*callback)(void*, char*,uint8_t*,unsigned int), int maxpacketsize, void* userData=NULL);
+    MQTT(uint8_t *, uint16_t port, void (*callback)(void*,char*,uint8_t*,unsigned int));
+    MQTT(uint8_t *, uint16_t port, void (*callback)(void*,char*,uint8_t*,unsigned int), int maxpacketsize, void* userData=NULL);
     ~MQTT();
 
     bool connect(const char *);
