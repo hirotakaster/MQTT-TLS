@@ -85,6 +85,7 @@ sample code bearing this copyright.
 // MQTT_KEEPALIVE : keepAlive interval in Seconds
 #define MQTT_KEEPALIVE 15
 
+#define MQTTPROTOCOLVERSION 3
 #define MQTTCONNECT     1 << 4  // Client request to connect to Server
 #define MQTTCONNACK     2 << 4  // Connect Acknowledgment
 #define MQTTPUBLISH     3 << 4  // Publish message
@@ -109,11 +110,6 @@ typedef enum{
     QOS1 = 1,
     QOS2 = 2,
 }EMQTT_QOS;
-
-typedef enum{
-    MQTT_V31 = 3,
-    MQTT_V311 = 4
-}MQTT_VERSION;
 
 private:
     TCPClient tcpClient;
@@ -173,7 +169,7 @@ public:
     bool connect(const char *);
     bool connect(const char *, const char *, const char *);
     bool connect(const char *, const char *, EMQTT_QOS, uint8_t, const char *);
-    bool connect(const char *, const char *, const char *, const char *, EMQTT_QOS, uint8_t, const char*, bool cleanSession, MQTT_VERSION version);
+    bool connect(const char *, const char *, const char *, const char *, EMQTT_QOS, uint8_t, const char*);
     void disconnect();
 
     bool publish(const char *, const char *);
