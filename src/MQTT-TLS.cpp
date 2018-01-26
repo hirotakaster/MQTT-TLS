@@ -15,20 +15,20 @@ MQTT::MQTT() {
     this->ip = NULL;
 }
 
-MQTT::MQTT(char* domain, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int)) {
-    this->initialize(domain, NULL, port, callback, MQTT_MAX_PACKET_SIZE);
+MQTT::MQTT(char* domain, uint16_t port, void (*callback)(void*,char*,uint8_t*,unsigned int)) {
+    this->initialize(domain, NULL, port, callback, NULL, MQTT_MAX_PACKET_SIZE);
 }
 
-MQTT::MQTT(char* domain, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize) {
-    this->initialize(domain, NULL, port, callback, maxpacketsize);
+MQTT::MQTT(char* domain, uint16_t port, void (*callback)(void*,char*,uint8_t*,unsigned int), int maxpacketsize, void* userData) {
+    this->initialize(domain, NULL, port, callback, userData, maxpacketsize);
 }
 
-MQTT::MQTT(uint8_t *ip, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int)) {
-    this->initialize(NULL, ip, port, callback, MQTT_MAX_PACKET_SIZE);
+MQTT::MQTT(uint8_t *ip, uint16_t port, void (*callback)(void*,char*,uint8_t*,unsigned int)) {
+    this->initialize(NULL, ip, port, callback, NULL, MQTT_MAX_PACKET_SIZE);
 }
 
-MQTT::MQTT(uint8_t *ip, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize) {
-    this->initialize(NULL, ip, port, callback, maxpacketsize);
+MQTT::MQTT(uint8_t *ip, uint16_t port, void (*callback)(void*,char*,uint8_t*,unsigned int), int maxpacketsize, void* userData) {
+    this->initialize(NULL, ip, port, callback, userData, maxpacketsize);
 }
 
 MQTT::~MQTT() {
@@ -38,8 +38,9 @@ MQTT::~MQTT() {
     }
 }
 
-void MQTT::initialize(char* domain, uint8_t *ip, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize) {
+void MQTT::initialize(char* domain, uint8_t *ip, uint16_t port, void (*callback)(void*,char*,uint8_t*,unsigned int), void *userData, int maxpacketsize) {
     this->callback = callback;
+    this->userData = userData;
     this->tls = false;
     this->tlsConnected = false;
     this->qoscallback = NULL;
@@ -168,7 +169,7 @@ bool MQTT::connect(const char *id, const char *user, const char *pass, const cha
     return false;
 }
 
-uint8_t MQTT::readByte() {
+int MQTT::readByte() {
     if (tls == false) {
         while(!tcpClient.available()) {}
         return tcpClient.read();
@@ -280,7 +281,7 @@ bool MQTT::loop() {
                         if ((buffer[0]&0x06) == MQTTQOS1_HEADER_MASK) {
                             msgId = (buffer[llen+3+tl]<<8)+buffer[llen+3+tl+1];
                             payload = buffer+llen+3+tl+2;
-                            callback(topic,payload,len-llen-3-tl-2);
+                            callback(userData,topic,payload,len-llen-3-tl-2);
 
                             buffer[0] = MQTTPUBACK;
                             buffer[1] = 2;
@@ -290,7 +291,7 @@ bool MQTT::loop() {
                             lastOutActivity = t;
                         } else {
                             payload = buffer+llen+3+tl;
-                            callback(topic,payload,len-llen-3-tl);
+                            callback(userData,topic,payload,len-llen-3-tl);
                         }
                     }
                 } else if (type == MQTTPUBACK || type == MQTTPUBREC) {
@@ -646,7 +647,7 @@ int MQTT::enableTls(const char *rootCaPem, const size_t rootCaPemSize,
 
 
 int MQTT::handShakeTls() {
-  int ret;
+  int ret = -1;
   debug_tls("hand shake start\n");
   do {
       while (ssl.state != MBEDTLS_SSL_HANDSHAKE_OVER) {
