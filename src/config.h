@@ -401,7 +401,7 @@
  *
  * Enable Cipher Block Chaining mode (CBC) for symmetric ciphers.
  */
-#define MBEDTLS_CIPHER_MODE_CBC
+//#define MBEDTLS_CIPHER_MODE_CBC
 
 /**
  * \def MBEDTLS_CIPHER_MODE_CFB
@@ -1905,7 +1905,7 @@
  * This module enables the AES-GCM and CAMELLIA-GCM ciphersuites, if other
  * requisites are enabled as well.
  */
-//#define MBEDTLS_GCM_C
+#define MBEDTLS_GCM_C
 
 /**
  * \def MBEDTLS_HAVEGE_C
