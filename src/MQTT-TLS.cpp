@@ -482,7 +482,9 @@ void MQTT::disconnect() {
         debug_tls("tls close\n");
         tlsConnected = false;
         tls = false;
-        mbedtls_x509_crt_free (&cacert);
+        mbedtls_x509_crt_free(&cacert);
+        mbedtls_x509_crt_free(&clicert);
+        mbedtls_pk_free(&pkey);
         mbedtls_ssl_config_free (&conf);
         mbedtls_ssl_free (&ssl);
     }
@@ -592,6 +594,7 @@ int MQTT::enableTls(const char *rootCaPem, const size_t rootCaPemSize,
     mbedtls_ssl_config_init(&conf);
     mbedtls_ssl_init(&ssl);
     mbedtls_x509_crt_init(&cacert);
+    mbedtls_x509_crt_init(&clicert);
     mbedtls_pk_init(&pkey);
 
     mbedtls_ssl_conf_dbg(&conf, &MQTT::debug_Tls, nullptr);
@@ -605,7 +608,6 @@ int MQTT::enableTls(const char *rootCaPem, const size_t rootCaPemSize,
     }
 
     if (clientCertPem != NULL && clientCertPemSize > 0) {
-      mbedtls_x509_crt_init(&clicert);
       if ((ret = mbedtls_x509_crt_parse(&clicert, (const unsigned char *)clientCertPem, clientCertPemSize)) < 0) {
         debug_tls(" tlsClientKey mbedtls_x509_crt_parse error : %d\n", ret);
         return ret;
@@ -656,6 +658,11 @@ int MQTT::handShakeTls() {
       }
   } while (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE);
 
+  // clean ca cert/crt/pkey for memory limitation
+  mbedtls_x509_crt_free(&cacert);
+  mbedtls_x509_crt_free(&clicert);
+  mbedtls_pk_free(&pkey);
+
   debug_tls("%s, ret = %d\n", "handshake done", ret);
   if (ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER) {
       tlsConnected = true;
@@ -692,3 +699,4 @@ int MQTT::veryfyCert_Tls(void *data, mbedtls_x509_crt *crt, int depth, uint32_t 
   }
   return 0;
 }
+
