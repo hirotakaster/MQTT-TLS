@@ -401,7 +401,7 @@
  *
  * Enable Cipher Block Chaining mode (CBC) for symmetric ciphers.
  */
-//#define MBEDTLS_CIPHER_MODE_CBC
+// #define MBEDTLS_CIPHER_MODE_CBC
 
 /**
  * \def MBEDTLS_CIPHER_MODE_CFB
@@ -2254,7 +2254,7 @@
  * This module is required for SSL/TLS up to version 1.1, for TLS 1.2
  * depending on the handshake parameters, and for SHA1-signed certificates.
  */
-// #define MBEDTLS_SHA1_C
+#define MBEDTLS_SHA1_C
 
 /**
  * \def MBEDTLS_SHA256_C
@@ -2286,7 +2286,7 @@
  *
  * This module adds support for SHA-384 and SHA-512.
  */
-//#define MBEDTLS_SHA512_C
+#define MBEDTLS_SHA512_C
 
 /**
  * \def MBEDTLS_SSL_CACHE_C
@@ -2614,7 +2614,7 @@
 //#define MBEDTLS_SSL_CACHE_DEFAULT_MAX_ENTRIES      50 /**< Maximum entries in cache */
 
 /* SSL options */
-//#define MBEDTLS_SSL_MAX_CONTENT_LEN             16384 /**< Maxium fragment length in bytes, determines the size of each of the two internal I/O buffers */
+#define MBEDTLS_SSL_MAX_CONTENT_LEN             8192 /**< Maxium fragment length in bytes, determines the size of each of the two internal I/O buffers */
 //#define MBEDTLS_SSL_DEFAULT_TICKET_LIFETIME     86400 /**< Lifetime of session tickets (if enabled) */
 //#define MBEDTLS_PSK_MAX_LEN               32 /**< Max size of TLS pre-shared keys, in bytes (default 256 bits) */
 //#define MBEDTLS_SSL_COOKIE_TIMEOUT        60 /**< Default expiration delay of DTLS cookies, in seconds if HAVE_TIME, or in number of cookies issued */

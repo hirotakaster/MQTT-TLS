@@ -699,4 +699,3 @@ int MQTT::veryfyCert_Tls(void *data, mbedtls_x509_crt *crt, int depth, uint32_t 
   }
   return 0;
 }
-
