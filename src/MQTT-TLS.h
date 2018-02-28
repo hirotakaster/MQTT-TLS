@@ -118,7 +118,7 @@ typedef enum{
 private:
     TCPClient tcpClient;
 
-    uint8_t *buffer;
+    uint8_t *buffer = NULL;
     uint16_t nextMsgId;
     unsigned long lastOutActivity;
     unsigned long lastInActivity;
@@ -130,7 +130,7 @@ private:
     bool write(uint8_t header, uint8_t* buf, uint16_t length);
     uint16_t writeString(const char* string, uint8_t* buf, uint16_t pos);
     String domain;
-    uint8_t *ip;
+    uint8_t *ip = NULL;
     uint16_t port;
     uint16_t maxpacketsize;
 

@@ -50,6 +50,8 @@ void MQTT::initialize(char* domain, uint8_t *ip, uint16_t port, void (*callback)
     this->port = port;
 
     this->maxpacketsize = maxpacketsize;
+    if (buffer != NULL)
+      delete[] buffer;
     buffer = new uint8_t[this->maxpacketsize];
 }
 
@@ -83,9 +85,9 @@ bool MQTT::connect(const char *id, const char *user, const char *pass, const cha
         } else {
             result = tcpClient.connect(this->ip, this->port);
             if (tls) {
-                char buffer[16];
-                sprintf(buffer, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-                mbedtls_ssl_set_hostname(&ssl, buffer);
+                char buffername[16];
+                sprintf(buffername, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+                mbedtls_ssl_set_hostname(&ssl, buffername);
                 result = (0 == this->handShakeTls() ? 1 : 0);
             }
         }
