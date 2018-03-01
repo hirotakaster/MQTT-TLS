@@ -6,6 +6,9 @@ This lightweight library source code are only 2 files. firmware -> MQTT-TLS.cpp,
 
 Application can use QOS0,1,2 and retain flag when send a publish message.
 
+This library tested on test.mosquitto.org, iot.eclipse.org, AWS IoT Gateway MQTT servers.
+
+
 ## Example
 Some sample sketches for Spark Core and Photon included(firmware/examples/).
  - a1-example.ino	: simple pub/sub sample. 
