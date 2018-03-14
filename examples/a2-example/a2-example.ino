@@ -33,21 +33,17 @@ void callback(char* topic, byte* payload, unsigned int length);
 "-----END CERTIFICATE----- "
 const char amazonIoTRootCaPem[] = AMAZON_IOT_ROOT_CA_PEM;
 
-
 #define CELINT_KEY_CRT_PEM                                              \
 "-----BEGIN CERTIFICATE----- \r\n"                                      \
 "[YOUR CLIENT KEY CRT PEM]                                       \r\n"  \
 "-----END CERTIFICATE----- "
 const char clientKeyCrtPem[] = CELINT_KEY_CRT_PEM;
 
-
 #define CELINT_KEY_PEM                                                  \
 "-----BEGIN RSA PRIVATE KEY-----\r\n"                                   \
-"[YOUR RSA PRIVATE KEY PEM]                                      \r\n"  \
+"[YOUR PRIVATE KEY PEM]                                          \r\n"  \
 "-----END RSA PRIVATE KEY----- "
-
 const char clientKeyPem[] = CELINT_KEY_PEM;
-
 
 /**
  * if want to use IP address,
@@ -56,7 +52,7 @@ const char clientKeyPem[] = CELINT_KEY_PEM;
  * want to use domain name,
  * MQTT client("www.sample.com", 1883, callback);
  **/
-MQTT client("[private key mqtt server]", 8883, callback);
+MQTT client("[TLS mqtt server]", 8883, callback);
 
 // recieve message
 void callback(char* topic, byte* payload, unsigned int length) {

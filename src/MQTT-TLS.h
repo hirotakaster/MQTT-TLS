@@ -83,7 +83,7 @@ sample code bearing this copyright.
 #define MQTT_MAX_PACKET_SIZE 255
 
 // MQTT_KEEPALIVE : keepAlive interval in Seconds
-#define MQTT_KEEPALIVE 15
+#define MQTT_DEFAULT_KEEPALIVE 15
 
 #define MQTTCONNECT     1 << 4  // Client request to connect to Server
 #define MQTTCONNACK     2 << 4  // Connect Acknowledgment
@@ -132,9 +132,10 @@ private:
     String domain;
     uint8_t *ip = NULL;
     uint16_t port;
+    int keepalive;
     uint16_t maxpacketsize;
 
-    void initialize(char* domain, uint8_t *ip, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize);
+    void initialize(char* domain, uint8_t *ip, uint16_t port, int keepalive, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize);
     uint16_t netWrite(unsigned char *buff, int length);
     bool available();
 
@@ -166,8 +167,12 @@ public:
 
     MQTT(char* domain, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int));
     MQTT(char* domain, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize);
+    MQTT(char* domain, uint16_t port, int keepalive, void (*callback)(char*,uint8_t*,unsigned int));
+    MQTT(char* domain, uint16_t port, int keepalive, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize);
     MQTT(uint8_t *, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int));
     MQTT(uint8_t *, uint16_t port, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize);
+    MQTT(uint8_t *, uint16_t port, int keepalive, void (*callback)(char*,uint8_t*,unsigned int));
+    MQTT(uint8_t *, uint16_t port, int keepalive, void (*callback)(char*,uint8_t*,unsigned int), int maxpacketsize);
     ~MQTT();
 
     bool connect(const char *);
