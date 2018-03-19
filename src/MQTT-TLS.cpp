@@ -683,6 +683,8 @@ int MQTT::handShakeTls() {
 
   debug_tls("%s, ret = %d\n", "handshake done", ret);
   if (ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER) {
+      if (enableVerify && !verify())
+        return -1;
       tlsConnected = true;
       debug_tls("tls connected\n");
       return 0;

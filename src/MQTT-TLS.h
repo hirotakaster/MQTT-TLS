@@ -160,7 +160,7 @@ private:
                           const char *str );
     static int veryfyCert_Tls(void *data, mbedtls_x509_crt *crt, int depth, uint32_t *flags);
     int handShakeTls();
-
+    bool verify();
 
 public:
     MQTT();
@@ -200,7 +200,7 @@ public:
     bool isConnected();
 
     /* TLS */
-    bool verify();
+    bool enableVerify = true;
     int enableTls(const char *rootCaPem, const size_t rootCaPemSize);
     int enableTls(const char *rootCaPem, const size_t rootCaPemSize,
                   const char *clientCertPem, const size_t clientCertPemSize,
