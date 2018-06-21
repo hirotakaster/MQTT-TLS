@@ -6,7 +6,7 @@ This lightweight library source code are only 2 files. firmware -> MQTT-TLS.cpp,
 
 Application can use QOS0,1,2 and retain flag when send a publish message.
 
-This library tested on test.mosquitto.org, iot.eclipse.org, AWS IoT Gateway MQTT servers.
+This library tested on test.mosquitto.org, iot.eclipse.org, AWS IoT Gateway, Google IoT Core, Azure IoT Hub MQTT servers.
 
 
 ## Example
