@@ -301,11 +301,11 @@ static void debug_print_pk( const mbedtls_ssl_context *ssl, int level,
         name[sizeof( name ) - 1] = '\0';
 
         if( items[i].type == MBEDTLS_PK_DEBUG_MPI )
-            mbedtls_debug_print_mpi( ssl, level, file, line, name, (const mbedtls_mpi *)items[i].value );
+            mbedtls_debug_print_mpi( ssl, level, file, line, name, items[i].value );
         else
 #if defined(MBEDTLS_ECP_C)
         if( items[i].type == MBEDTLS_PK_DEBUG_ECP )
-            mbedtls_debug_print_ecp( ssl, level, file, line, name, (const mbedtls_ecp_point *)items[i].value );
+            mbedtls_debug_print_ecp( ssl, level, file, line, name, items[i].value );
         else
 #endif
             debug_send_line( ssl, level, file, line,

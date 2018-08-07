@@ -40,7 +40,7 @@
 
 #if !defined(unix) && !defined(__unix__) && !defined(__unix) && \
     !defined(__APPLE__) && !defined(_WIN32)
-//#error "This module only works on Unix and Windows, see MBEDTLS_TIMING_C in config.h"
+// #error "This module only works on Unix and Windows, see MBEDTLS_TIMING_C in config.h"
 #endif
 
 #ifndef asm
@@ -229,7 +229,6 @@ extern "C" int _gettimeofday( struct timeval *tv, void *tzvp )
     return 0;
 } // end _gettimeofday()
 
-
 static int hardclock_init = 0;
 static struct timeval tv_init;
 
@@ -239,11 +238,11 @@ unsigned long mbedtls_timing_hardclock( void )
 
     if( hardclock_init == 0 )
     {
-        _gettimeofday( &tv_init, NULL );
+        gettimeofday( &tv_init, NULL );
         hardclock_init = 1;
     }
 
-    _gettimeofday( &tv_cur, NULL );
+    gettimeofday( &tv_cur, NULL );
     return( ( tv_cur.tv_sec  - tv_init.tv_sec  ) * 1000000
           + ( tv_cur.tv_usec - tv_init.tv_usec ) );
 }

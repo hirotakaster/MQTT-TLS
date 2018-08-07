@@ -1,5 +1,5 @@
 # MQTT-TLS for Photon, Spark Core
-<a href="http://mqtt.org/" target=_blank>MQTT</a> publish/subscribe TLS library for Photon, Spark Core. This library based <a href="https://github.com/hirotakaster/MQTT">MQTT for Photon, Spark Core</a> and <a href="https://github.com/hirotakaster/TlsTcpClient">TlsTcpClient</a>(using mbedTLS).
+<a href="http://mqtt.org/" target=_blank>MQTT</a> publish/subscribe TLS library for Photon, Spark Core. This library based <a href="https://github.com/hirotakaster/MQTT">MQTT for Photon, Spark Core</a> and <a href="https://github.com/hirotakaster/TlsTcpClient">TlsTcpClient</a>(using mbedTLS 2.7.5).
 
 ## Source Code
 This lightweight library source code are only 2 files. firmware -> MQTT-TLS.cpp, MQTT-TLS.h.
