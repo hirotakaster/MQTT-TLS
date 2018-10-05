@@ -69,9 +69,9 @@ sample code bearing this copyright.
 #include "timer_hal.h"
 
 // for debugging.
-#define DEBUG_TLS       1
+#define DEBUG_TLS       0
 #if defined(MBEDTLS_DEBUG_C)
-#define DEBUG_TLS_CORE_LEVEL 1
+#define DEBUG_TLS_CORE_LEVEL 2
 #define debug_tls( fmt, ... ) \
     Serial.printf(fmt, ##__VA_ARGS__)
 #else /* !DEBUG_TLS */
@@ -162,6 +162,9 @@ private:
     int handShakeTls();
     bool verify();
 
+    bool publishRelease(uint16_t messageid);
+    bool publishComplete(uint16_t messageid);
+
 public:
     MQTT();
 
@@ -191,7 +194,6 @@ public:
     bool publish(const char *, const uint8_t *, unsigned int, bool, EMQTT_QOS, uint16_t *messageid = NULL);
     bool publish(const char *, const uint8_t *, unsigned int, bool, EMQTT_QOS, bool, uint16_t *messageid);
     void addQosCallback(void (*qoscallback)(unsigned int));
-    bool publishRelease(uint16_t messageid);
 
     bool subscribe(const char *);
     bool subscribe(const char *, EMQTT_QOS);
