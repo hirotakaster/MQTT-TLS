@@ -228,6 +228,8 @@ uint16_t MQTT::readPacket(uint8_t* lengthLength) {
     uint8_t start = 0;
 
     do {
+        // check connection for TLS or TCP disconnection.
+        if (!isConnected()) return -1;
         digit = readByte();
         buffer[len++] = digit;
         length += (digit & 127) * multiplier;
@@ -355,8 +357,8 @@ bool MQTT::loop() {
                     pingOutstanding = false;
                 }
             }
+            return true;
         }
-        return true;
     }
     return false;
 }
@@ -569,7 +571,7 @@ uint16_t MQTT::netWrite(unsigned char *buff, int length) {
 
 bool MQTT::isConnected() {
     bool rc = (int)tcpClient.connected();
-    if (tls)
+    if (rc && tls)
         return tlsConnected;
     return rc;
 }
