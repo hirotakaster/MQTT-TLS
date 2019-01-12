@@ -963,7 +963,7 @@
  *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA
  *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_RC4_128_SHA
  */
-//#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
 
 /**
  * \def MBEDTLS_KEY_EXCHANGE_ECDH_ECDSA_ENABLED
@@ -1872,7 +1872,7 @@
  *          library/x509write_crt.c
  *          library/x509write_csr.c
  */
-//#define MBEDTLS_ASN1_WRITE_C
+#define MBEDTLS_ASN1_WRITE_C
 
 /**
  * \def MBEDTLS_BASE64_C
@@ -2184,7 +2184,7 @@
  *
  * Requires: MBEDTLS_ECP_C
  */
-//#define MBEDTLS_ECDH_C
+#define MBEDTLS_ECDH_C
 
 /**
  * \def MBEDTLS_ECDSA_C
@@ -2199,7 +2199,7 @@
  *
  * Requires: MBEDTLS_ECP_C, MBEDTLS_ASN1_WRITE_C, MBEDTLS_ASN1_PARSE_C
  */
-//#define MBEDTLS_ECDSA_C
+#define MBEDTLS_ECDSA_C
 
 /**
  * \def MBEDTLS_ECJPAKE_C
@@ -2232,7 +2232,7 @@
  *
  * Requires: MBEDTLS_BIGNUM_C and at least one MBEDTLS_ECP_DP_XXX_ENABLED
  */
-//#define MBEDTLS_ECP_C
+#define MBEDTLS_ECP_C
 
 /**
  * \def MBEDTLS_ENTROPY_C
