@@ -316,22 +316,6 @@ void mbedtls_dhm_free( mbedtls_dhm_context *ctx );
 int mbedtls_dhm_parse_dhm( mbedtls_dhm_context *dhm, const unsigned char *dhmin,
                            size_t dhminlen );
 
-#if defined(MBEDTLS_FS_IO)
-/** \ingroup x509_module */
-/**
- * \brief          This function loads and parses DHM parameters from a file.
- *
- * \param dhm      The DHM context to load the parameters to.
- *                 This must be initialized.
- * \param path     The filename to read the DHM parameters from.
- *                 This must not be \c NULL.
- *
- * \return         \c 0 on success.
- * \return         An \c MBEDTLS_ERR_DHM_XXX or \c MBEDTLS_ERR_PEM_XXX
- *                 error code on failure.
- */
-int mbedtls_dhm_parse_dhmfile( mbedtls_dhm_context *dhm, const char *path );
-#endif /* MBEDTLS_FS_IO */
 #endif /* MBEDTLS_ASN1_PARSE_C */
 
 /**

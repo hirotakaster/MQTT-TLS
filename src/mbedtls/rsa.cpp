@@ -36,6 +36,7 @@
  *      https://arxiv.org/abs/1702.08719v2
  *
  */
+#include "Arduino.h"
 
 #if !defined(MBEDTLS_CONFIG_FILE)
 #include "mbedtls/config.h"
@@ -63,8 +64,9 @@
 #if defined(MBEDTLS_PLATFORM_C)
 #include "mbedtls/platform.h"
 #else
-#include <stdio.h>
-#define mbedtls_printf printf
+#include "Arduino.h"
+//#include <stdio.h>
+#define mbedtls_printf Serial.println
 #define mbedtls_calloc calloc
 #define mbedtls_free   free
 #endif
@@ -252,7 +254,7 @@ int mbedtls_rsa_complete( mbedtls_rsa_context *ctx )
     int n_missing, pq_missing, d_missing, is_pub, is_priv;
 
     RSA_VALIDATE_RET( ctx != NULL );
-
+    Serial.println("mbedtls_rsa_complete:Mem Check(1):" + String::format("%d",System.freeMemory()));
     have_N = ( mbedtls_mpi_cmp_int( &ctx->N, 0 ) != 0 );
     have_P = ( mbedtls_mpi_cmp_int( &ctx->P, 0 ) != 0 );
     have_Q = ( mbedtls_mpi_cmp_int( &ctx->Q, 0 ) != 0 );
@@ -283,7 +285,7 @@ int mbedtls_rsa_complete( mbedtls_rsa_context *ctx )
     /*
      * Step 1: Deduce N if P, Q are provided.
      */
-
+Serial.println("mbedtls_rsa_complete:Mem Check(2):" + String::format("%d",System.freeMemory()));
     if( !have_N && have_P && have_Q )
     {
         if( ( ret = mbedtls_mpi_mul_mpi( &ctx->N, &ctx->P,
@@ -298,7 +300,7 @@ int mbedtls_rsa_complete( mbedtls_rsa_context *ctx )
     /*
      * Step 2: Deduce and verify all remaining core parameters.
      */
-
+     Serial.println("mbedtls_rsa_complete:Mem Check(3):" + String::format("%d",System.freeMemory()));
     if( pq_missing )
     {
         ret = mbedtls_rsa_deduce_primes( &ctx->N, &ctx->E, &ctx->D,
@@ -322,6 +324,7 @@ int mbedtls_rsa_complete( mbedtls_rsa_context *ctx )
      * Step 3: Deduce all additional parameters specific
      *         to our current RSA implementation.
      */
+     Serial.println("mbedtls_rsa_complete:Mem Check(4):" + String::format("%d",System.freeMemory()));
 
 #if !defined(MBEDTLS_RSA_NO_CRT)
     if( is_priv )
@@ -336,7 +339,7 @@ int mbedtls_rsa_complete( mbedtls_rsa_context *ctx )
     /*
      * Step 3: Basic sanity checks
      */
-
+Serial.println("mbedtls_rsa_complete:Mem Check(5):" + String::format("%d",System.freeMemory()));
     return( rsa_check_context( ctx, is_priv, 1 ) );
 }
 

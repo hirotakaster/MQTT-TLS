@@ -321,43 +321,6 @@ MBEDTLS_DEPRECATED void mbedtls_ctr_drbg_update(
 #undef MBEDTLS_DEPRECATED
 #endif /* !MBEDTLS_DEPRECATED_REMOVED */
 
-#if defined(MBEDTLS_FS_IO)
-/**
- * \brief               This function writes a seed file.
- *
- * \param ctx           The CTR_DRBG context.
- * \param path          The name of the file.
- *
- * \return              \c 0 on success.
- * \return              #MBEDTLS_ERR_CTR_DRBG_FILE_IO_ERROR on file error.
- * \return              #MBEDTLS_ERR_CTR_DRBG_ENTROPY_SOURCE_FAILED on
- *                      failure.
- */
-int mbedtls_ctr_drbg_write_seed_file( mbedtls_ctr_drbg_context *ctx, const char *path );
-
-/**
- * \brief               This function reads and updates a seed file. The seed
- *                      is added to this instance.
- *
- * \param ctx           The CTR_DRBG context.
- * \param path          The name of the file.
- *
- * \return              \c 0 on success.
- * \return              #MBEDTLS_ERR_CTR_DRBG_FILE_IO_ERROR on file error.
- * \return              #MBEDTLS_ERR_CTR_DRBG_ENTROPY_SOURCE_FAILED or
- *                      #MBEDTLS_ERR_CTR_DRBG_INPUT_TOO_BIG on failure.
- */
-int mbedtls_ctr_drbg_update_seed_file( mbedtls_ctr_drbg_context *ctx, const char *path );
-#endif /* MBEDTLS_FS_IO */
-
-/**
- * \brief               The CTR_DRBG checkup routine.
- *
- * \return              \c 0 on success.
- * \return              \c 1 on failure.
- */
-int mbedtls_ctr_drbg_self_test( int verbose );
-
 /* Internal functions (do not call directly) */
 int mbedtls_ctr_drbg_seed_entropy_len( mbedtls_ctr_drbg_context *,
                                int (*)(void *, unsigned char *, size_t), void *,
