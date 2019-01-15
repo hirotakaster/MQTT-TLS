@@ -285,6 +285,32 @@ MBEDTLS_DEPRECATED void mbedtls_hmac_drbg_update(
 #undef MBEDTLS_DEPRECATED
 #endif /* !MBEDTLS_DEPRECATED_REMOVED */
 
+#if defined(MBEDTLS_FS_IO)
+/**
+ * \brief               Write a seed file
+ *
+ * \param ctx           HMAC_DRBG context
+ * \param path          Name of the file
+ *
+ * \return              0 if successful, 1 on file error, or
+ *                      MBEDTLS_ERR_HMAC_DRBG_ENTROPY_SOURCE_FAILED
+ */
+int mbedtls_hmac_drbg_write_seed_file( mbedtls_hmac_drbg_context *ctx, const char *path );
+
+/**
+ * \brief               Read and update a seed file. Seed is added to this
+ *                      instance
+ *
+ * \param ctx           HMAC_DRBG context
+ * \param path          Name of the file
+ *
+ * \return              0 if successful, 1 on file error,
+ *                      MBEDTLS_ERR_HMAC_DRBG_ENTROPY_SOURCE_FAILED or
+ *                      MBEDTLS_ERR_HMAC_DRBG_INPUT_TOO_BIG
+ */
+int mbedtls_hmac_drbg_update_seed_file( mbedtls_hmac_drbg_context *ctx, const char *path );
+#endif /* MBEDTLS_FS_IO */
+
 
 #if defined(MBEDTLS_SELF_TEST)
 /**

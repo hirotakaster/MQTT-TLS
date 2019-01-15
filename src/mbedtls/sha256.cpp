@@ -43,7 +43,7 @@
 #else
 #include <stdio.h>
 #include <stdlib.h>
-#define mbedtls_printf Serial.println
+#define mbedtls_printf printf
 #define mbedtls_calloc    calloc
 #define mbedtls_free       free
 #endif /* MBEDTLS_PLATFORM_C */

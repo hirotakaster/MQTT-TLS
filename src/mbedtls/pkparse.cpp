@@ -19,8 +19,6 @@
  *  This file is part of mbed TLS (https://tls.mbed.org)
  */
 
- #include "Arduino.h"
-
 #if !defined(MBEDTLS_CONFIG_FILE)
 #include "mbedtls/config.h"
 #else
@@ -68,6 +66,115 @@
     MBEDTLS_INTERNAL_VALIDATE_RET( cond, MBEDTLS_ERR_PK_BAD_INPUT_DATA )
 #define PK_VALIDATE( cond )        \
     MBEDTLS_INTERNAL_VALIDATE( cond )
+
+#if defined(MBEDTLS_FS_IO)
+/*
+ * Load all data from a file into a given buffer.
+ *
+ * The file is expected to contain either PEM or DER encoded data.
+ * A terminating null byte is always appended. It is included in the announced
+ * length only if the data looks like it is PEM encoded.
+ */
+int mbedtls_pk_load_file( const char *path, unsigned char **buf, size_t *n )
+{
+    FILE *f;
+    long size;
+
+    PK_VALIDATE_RET( path != NULL );
+    PK_VALIDATE_RET( buf != NULL );
+    PK_VALIDATE_RET( n != NULL );
+
+    if( ( f = fopen( path, "rb" ) ) == NULL )
+        return( MBEDTLS_ERR_PK_FILE_IO_ERROR );
+
+    fseek( f, 0, SEEK_END );
+    if( ( size = ftell( f ) ) == -1 )
+    {
+        fclose( f );
+        return( MBEDTLS_ERR_PK_FILE_IO_ERROR );
+    }
+    fseek( f, 0, SEEK_SET );
+
+    *n = (size_t) size;
+
+    if( *n + 1 == 0 ||
+        ( *buf = mbedtls_calloc( 1, *n + 1 ) ) == NULL )
+    {
+        fclose( f );
+        return( MBEDTLS_ERR_PK_ALLOC_FAILED );
+    }
+
+    if( fread( *buf, 1, *n, f ) != *n )
+    {
+        fclose( f );
+
+        mbedtls_platform_zeroize( *buf, *n );
+        mbedtls_free( *buf );
+
+        return( MBEDTLS_ERR_PK_FILE_IO_ERROR );
+    }
+
+    fclose( f );
+
+    (*buf)[*n] = '\0';
+
+    if( strstr( (const char *) *buf, "-----BEGIN " ) != NULL )
+        ++*n;
+
+    return( 0 );
+}
+
+/*
+ * Load and parse a private key
+ */
+int mbedtls_pk_parse_keyfile( mbedtls_pk_context *ctx,
+                      const char *path, const char *pwd )
+{
+    int ret;
+    size_t n;
+    unsigned char *buf;
+
+    PK_VALIDATE_RET( ctx != NULL );
+    PK_VALIDATE_RET( path != NULL );
+
+    if( ( ret = mbedtls_pk_load_file( path, &buf, &n ) ) != 0 )
+        return( ret );
+
+    if( pwd == NULL )
+        ret = mbedtls_pk_parse_key( ctx, buf, n, NULL, 0 );
+    else
+        ret = mbedtls_pk_parse_key( ctx, buf, n,
+                (const unsigned char *) pwd, strlen( pwd ) );
+
+    mbedtls_platform_zeroize( buf, n );
+    mbedtls_free( buf );
+
+    return( ret );
+}
+
+/*
+ * Load and parse a public key
+ */
+int mbedtls_pk_parse_public_keyfile( mbedtls_pk_context *ctx, const char *path )
+{
+    int ret;
+    size_t n;
+    unsigned char *buf;
+
+    PK_VALIDATE_RET( ctx != NULL );
+    PK_VALIDATE_RET( path != NULL );
+
+    if( ( ret = mbedtls_pk_load_file( path, &buf, &n ) ) != 0 )
+        return( ret );
+
+    ret = mbedtls_pk_parse_public_key( ctx, buf, n );
+
+    mbedtls_platform_zeroize( buf, n );
+    mbedtls_free( buf );
+
+    return( ret );
+}
+#endif /* MBEDTLS_FS_IO */
 
 #if defined(MBEDTLS_ECP_C)
 /* Minimally parse an ECParameters buffer to and mbedtls_asn1_buf
@@ -582,7 +689,6 @@ static int pk_parse_key_pkcs1_der( mbedtls_rsa_context *rsa,
     unsigned char *p, *end;
 
     mbedtls_mpi T;
-    Serial.println("mbedtls_pk_parse_key:Mem Check(2_1):" + String::format("%d",System.freeMemory()));
     mbedtls_mpi_init( &T );
 
     p = (unsigned char *) key;
@@ -604,7 +710,6 @@ static int pk_parse_key_pkcs1_der( mbedtls_rsa_context *rsa,
      *      otherPrimeInfos   OtherPrimeInfos OPTIONAL
      *  }
      */
-     Serial.println("mbedtls_pk_parse_key:Mem Check(2_2):" + String::format("%d",System.freeMemory()));
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
             MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) ) != 0 )
     {
@@ -612,7 +717,7 @@ static int pk_parse_key_pkcs1_der( mbedtls_rsa_context *rsa,
     }
 
     end = p + len;
-    Serial.println("mbedtls_pk_parse_key:Mem Check(2_3):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = mbedtls_asn1_get_int( &p, end, &version ) ) != 0 )
     {
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
@@ -624,7 +729,6 @@ static int pk_parse_key_pkcs1_der( mbedtls_rsa_context *rsa,
     }
 
     /* Import N */
-    Serial.println("mbedtls_pk_parse_key:Mem Check(2_4):" + String::format("%d",System.freeMemory()));
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
                                       MBEDTLS_ASN1_INTEGER ) ) != 0 ||
         ( ret = mbedtls_rsa_import_raw( rsa, p, len, NULL, 0, NULL, 0,
@@ -633,7 +737,6 @@ static int pk_parse_key_pkcs1_der( mbedtls_rsa_context *rsa,
     p += len;
 
     /* Import E */
-    Serial.println("mbedtls_pk_parse_key:Mem Check(2_5):" + String::format("%d",System.freeMemory()));
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
                                       MBEDTLS_ASN1_INTEGER ) ) != 0 ||
         ( ret = mbedtls_rsa_import_raw( rsa, NULL, 0, NULL, 0, NULL, 0,
@@ -642,7 +745,6 @@ static int pk_parse_key_pkcs1_der( mbedtls_rsa_context *rsa,
     p += len;
 
     /* Import D */
-    Serial.println("mbedtls_pk_parse_key:Mem Check(2_6):" + String::format("%d",System.freeMemory()));
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
                                       MBEDTLS_ASN1_INTEGER ) ) != 0 ||
         ( ret = mbedtls_rsa_import_raw( rsa, NULL, 0, NULL, 0, NULL, 0,
@@ -651,7 +753,6 @@ static int pk_parse_key_pkcs1_der( mbedtls_rsa_context *rsa,
     p += len;
 
     /* Import P */
-    Serial.println("mbedtls_pk_parse_key:Mem Check(2_7):" + String::format("%d",System.freeMemory()));
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
                                       MBEDTLS_ASN1_INTEGER ) ) != 0 ||
         ( ret = mbedtls_rsa_import_raw( rsa, NULL, 0, p, len, NULL, 0,
@@ -660,7 +761,6 @@ static int pk_parse_key_pkcs1_der( mbedtls_rsa_context *rsa,
     p += len;
 
     /* Import Q */
-    Serial.println("mbedtls_pk_parse_key:Mem Check(2_8):" + String::format("%d",System.freeMemory()));
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
                                       MBEDTLS_ASN1_INTEGER ) ) != 0 ||
         ( ret = mbedtls_rsa_import_raw( rsa, NULL, 0, NULL, 0, p, len,
@@ -669,12 +769,10 @@ static int pk_parse_key_pkcs1_der( mbedtls_rsa_context *rsa,
     p += len;
 
     /* Complete the RSA private key */
-    Serial.println("mbedtls_pk_parse_key:Mem Check(2_9):" + String::format("%d",System.freeMemory()));
-    if( ( ret = mbedtls_rsa_complete( rsa ) ) != 0 ) //Memory lost here
+    if( ( ret = mbedtls_rsa_complete( rsa ) ) != 0 )
         goto cleanup;
 
     /* Check optional parameters */
-    Serial.println("mbedtls_pk_parse_key:Mem Check(2_10):" + String::format("%d",System.freeMemory()));
     if( ( ret = mbedtls_asn1_get_mpi( &p, end, &T ) ) != 0 ||
         ( ret = mbedtls_asn1_get_mpi( &p, end, &T ) ) != 0 ||
         ( ret = mbedtls_asn1_get_mpi( &p, end, &T ) ) != 0 )
@@ -687,7 +785,7 @@ static int pk_parse_key_pkcs1_der( mbedtls_rsa_context *rsa,
     }
 
 cleanup:
-    Serial.println("mbedtls_pk_parse_key:Mem Check(2_11):" + String::format("%d",System.freeMemory()));
+
     mbedtls_mpi_free( &T );
 
     if( ret != 0 )
@@ -697,7 +795,7 @@ cleanup:
             ret = MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret;
         else
             ret = MBEDTLS_ERR_PK_KEY_INVALID_FORMAT;
-            Serial.println("mbedtls_pk_parse_key:Mem Check(2_12):" + String::format("%d",System.freeMemory()));
+
         mbedtls_rsa_free( rsa );
     }
 
@@ -731,7 +829,6 @@ static int pk_parse_key_sec1_der( mbedtls_ecp_keypair *eck,
      *      publicKey  [1] BIT STRING OPTIONAL
      *    }
      */
-     Serial.println("mbedtls_pk_parse_key:Mem Check(3_1):" + String::format("%d",System.freeMemory()));
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
             MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) ) != 0 )
     {
@@ -739,19 +836,18 @@ static int pk_parse_key_sec1_der( mbedtls_ecp_keypair *eck,
     }
 
     end = p + len;
-Serial.println("mbedtls_pk_parse_key:Mem Check(3_2):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = mbedtls_asn1_get_int( &p, end, &version ) ) != 0 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
 
     if( version != 1 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_VERSION );
-Serial.println("mbedtls_pk_parse_key:Mem Check(3_3):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len, MBEDTLS_ASN1_OCTET_STRING ) ) != 0 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
-Serial.println("mbedtls_pk_parse_key:Mem Check(3_4):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = mbedtls_mpi_read_binary( &eck->d, p, len ) ) != 0 )
     {
-      Serial.println("mbedtls_pk_parse_key:Mem Check(3_5):" + String::format("%d",System.freeMemory()));
         mbedtls_ecp_keypair_free( eck );
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
     }
@@ -764,11 +860,9 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(3_4):" + String::format("%d",Syst
         /*
          * Is 'parameters' present?
          */
-         Serial.println("mbedtls_pk_parse_key:Mem Check(3_6):" + String::format("%d",System.freeMemory()));
         if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
                         MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_ASN1_CONSTRUCTED | 0 ) ) == 0 )
         {
-          Serial.println("mbedtls_pk_parse_key:Mem Check(3_7):" + String::format("%d",System.freeMemory()));
             if( ( ret = pk_get_ecparams( &p, p + len, &params) ) != 0 ||
                 ( ret = pk_use_ecparams( &params, &eck->grp )  ) != 0 )
             {
@@ -788,19 +882,19 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(3_4):" + String::format("%d",Syst
         /*
          * Is 'publickey' present? If not, or if we can't read it (eg because it
          * is compressed), create it from the private key.
-         */Serial.println("mbedtls_pk_parse_key:Mem Check(3_8):" + String::format("%d",System.freeMemory()));
+         */
         if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
                         MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_ASN1_CONSTRUCTED | 1 ) ) == 0 )
         {
             end2 = p + len;
-Serial.println("mbedtls_pk_parse_key:Mem Check(3_9):" + String::format("%d",System.freeMemory()));
+
             if( ( ret = mbedtls_asn1_get_bitstring_null( &p, end2, &len ) ) != 0 )
                 return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
 
             if( p + len != end2 )
                 return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT +
                         MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
-Serial.println("mbedtls_pk_parse_key:Mem Check(3_10):" + String::format("%d",System.freeMemory()));
+
             if( ( ret = pk_get_ecpubkey( &p, end2, eck ) ) == 0 )
                 pubkey_done = 1;
             else
@@ -815,7 +909,6 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(3_10):" + String::format("%d",Sys
         }
         else if( ret != MBEDTLS_ERR_ASN1_UNEXPECTED_TAG )
         {
-          Serial.println("mbedtls_pk_parse_key:Mem Check(3_11):" + String::format("%d",System.freeMemory()));
             mbedtls_ecp_keypair_free( eck );
             return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
         }
@@ -825,14 +918,12 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(3_10):" + String::format("%d",Sys
         ( ret = mbedtls_ecp_mul( &eck->grp, &eck->Q, &eck->d, &eck->grp.G,
                                                       NULL, NULL ) ) != 0 )
     {
-      Serial.println("mbedtls_pk_parse_key:Mem Check(3_12):" + String::format("%d",System.freeMemory()));
         mbedtls_ecp_keypair_free( eck );
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
     }
 
     if( ( ret = mbedtls_ecp_check_privkey( &eck->grp, &eck->d ) ) != 0 )
     {
-      Serial.println("mbedtls_pk_parse_key:Mem Check(3_13):" + String::format("%d",System.freeMemory()));
         mbedtls_ecp_keypair_free( eck );
         return( ret );
     }
@@ -882,7 +973,7 @@ static int pk_parse_key_pkcs8_unencrypted_der(
      *
      *  The PrivateKey OCTET STRING is a SEC1 ECPrivateKey
      */
-    Serial.println("mbedtls_pk_parse_key:Mem Check(1_1):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
             MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) ) != 0 )
     {
@@ -890,34 +981,32 @@ static int pk_parse_key_pkcs8_unencrypted_der(
     }
 
     end = p + len;
-    Serial.println("mbedtls_pk_parse_key:Mem Check(1_2):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = mbedtls_asn1_get_int( &p, end, &version ) ) != 0 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
 
     if( version != 0 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_VERSION + ret );
-    Serial.println("mbedtls_pk_parse_key:Mem Check(1_3):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = pk_get_pk_alg( &p, end, &pk_alg, &params ) ) != 0 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
-    Serial.println("mbedtls_pk_parse_key:Mem Check(1_4):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len, MBEDTLS_ASN1_OCTET_STRING ) ) != 0 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
-    Serial.println("mbedtls_pk_parse_key:Mem Check(1_5):" + String::format("%d",System.freeMemory()));
+
     if( len < 1 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT +
                 MBEDTLS_ERR_ASN1_OUT_OF_DATA );
-    Serial.println("mbedtls_pk_parse_key:Mem Check(1_6):" + String::format("%d",System.freeMemory()));
+
     if( ( pk_info = mbedtls_pk_info_from_type( pk_alg ) ) == NULL )
         return( MBEDTLS_ERR_PK_UNKNOWN_PK_ALG );
 
-    Serial.println("mbedtls_pk_parse_key:Mem Check(1_7):" + String::format("%d",System.freeMemory()));
     if( ( ret = mbedtls_pk_setup( pk, pk_info ) ) != 0 )
         return( ret );
 
 #if defined(MBEDTLS_RSA_C)
     if( pk_alg == MBEDTLS_PK_RSA )
     {
-        Serial.println("mbedtls_pk_parse_key:Mem Check(1_8):" + String::format("%d",System.freeMemory()));
         if( ( ret = pk_parse_key_pkcs1_der( mbedtls_pk_rsa( *pk ), p, len ) ) != 0 )
         {
             mbedtls_pk_free( pk );
@@ -928,7 +1017,6 @@ static int pk_parse_key_pkcs8_unencrypted_der(
 #if defined(MBEDTLS_ECP_C)
     if( pk_alg == MBEDTLS_PK_ECKEY || pk_alg == MBEDTLS_PK_ECKEY_DH )
     {
-        Serial.println("mbedtls_pk_parse_key:Mem Check(1_9):" + String::format("%d",System.freeMemory()));
         if( ( ret = pk_use_ecparams( &params, &mbedtls_pk_ec( *pk )->grp ) ) != 0 ||
             ( ret = pk_parse_key_sec1_der( mbedtls_pk_ec( *pk ), p, len )  ) != 0 )
         {
@@ -988,7 +1076,6 @@ static int pk_parse_key_pkcs8_encrypted_der(
      *  The EncryptedData OCTET STRING is a PKCS#8 PrivateKeyInfo
      *
      */
-     Serial.println("mbedtls_pk_parse_key:Mem Check(4_1):" + String::format("%d",System.freeMemory()));
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
             MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) ) != 0 )
     {
@@ -996,10 +1083,10 @@ static int pk_parse_key_pkcs8_encrypted_der(
     }
 
     end = p + len;
-Serial.println("mbedtls_pk_parse_key:Mem Check(4_2):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = mbedtls_asn1_get_alg( &p, end, &pbe_alg_oid, &pbe_params ) ) != 0 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
-Serial.println("mbedtls_pk_parse_key:Mem Check(4_3):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = mbedtls_asn1_get_tag( &p, end, &len, MBEDTLS_ASN1_OCTET_STRING ) ) != 0 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT + ret );
 
@@ -1009,10 +1096,8 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(4_3):" + String::format("%d",Syst
      * Decrypt EncryptedData with appropriate PBE
      */
 #if defined(MBEDTLS_PKCS12_C)
-Serial.println("mbedtls_pk_parse_key:Mem Check(4_4):" + String::format("%d",System.freeMemory()));
     if( mbedtls_oid_get_pkcs12_pbe_alg( &pbe_alg_oid, &md_alg, &cipher_alg ) == 0 )
     {
-      Serial.println("mbedtls_pk_parse_key:Mem Check(4_5):" + String::format("%d",System.freeMemory()));
         if( ( ret = mbedtls_pkcs12_pbe( &pbe_params, MBEDTLS_PKCS12_PBE_DECRYPT,
                                 cipher_alg, md_alg,
                                 pwd, pwdlen, p, len, buf ) ) != 0 )
@@ -1027,7 +1112,6 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(4_4):" + String::format("%d",Syst
     }
     else if( MBEDTLS_OID_CMP( MBEDTLS_OID_PKCS12_PBE_SHA1_RC4_128, &pbe_alg_oid ) == 0 )
     {
-      Serial.println("mbedtls_pk_parse_key:Mem Check(4_6):" + String::format("%d",System.freeMemory()));
         if( ( ret = mbedtls_pkcs12_pbe_sha1_rc4_128( &pbe_params,
                                              MBEDTLS_PKCS12_PBE_DECRYPT,
                                              pwd, pwdlen,
@@ -1047,10 +1131,8 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(4_4):" + String::format("%d",Syst
     else
 #endif /* MBEDTLS_PKCS12_C */
 #if defined(MBEDTLS_PKCS5_C)
-Serial.println("mbedtls_pk_parse_key:Mem Check(4_7):" + String::format("%d",System.freeMemory()));
     if( MBEDTLS_OID_CMP( MBEDTLS_OID_PKCS5_PBES2, &pbe_alg_oid ) == 0 )
     {
-      Serial.println("mbedtls_pk_parse_key:Mem Check(4_8):" + String::format("%d",System.freeMemory()));
         if( ( ret = mbedtls_pkcs5_pbes2( &pbe_params, MBEDTLS_PKCS5_DECRYPT, pwd, pwdlen,
                                   p, len, buf ) ) != 0 )
         {
@@ -1070,7 +1152,7 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(4_7):" + String::format("%d",Syst
 
     if( decrypted == 0 )
         return( MBEDTLS_ERR_PK_FEATURE_UNAVAILABLE );
-Serial.println("mbedtls_pk_parse_key:Mem Check(4_9):" + String::format("%d",System.freeMemory()));
+
     return( pk_parse_key_pkcs8_unencrypted_der( pk, buf, len ) );
 }
 #endif /* MBEDTLS_PKCS12_C || MBEDTLS_PKCS5_C */
@@ -1093,7 +1175,7 @@ int mbedtls_pk_parse_key( mbedtls_pk_context *pk,
     if( keylen == 0 )
         return( MBEDTLS_ERR_PK_KEY_INVALID_FORMAT );
     PK_VALIDATE_RET( key != NULL );
-Serial.println("mbedtls_pk_parse_key:Mem Check:" + String::format("%d",System.freeMemory()));
+
 #if defined(MBEDTLS_PEM_PARSE_C)
    mbedtls_pem_init( &pem );
 
@@ -1102,7 +1184,6 @@ Serial.println("mbedtls_pk_parse_key:Mem Check:" + String::format("%d",System.fr
     if( key[keylen - 1] != '\0' )
         ret = MBEDTLS_ERR_PEM_NO_HEADER_FOOTER_PRESENT;
     else
-        Serial.println("mbedtls_pk_parse_key:Mem Check(2):" + String::format("%d",System.freeMemory()));
         ret = mbedtls_pem_read_buffer( &pem,
                                "-----BEGIN RSA PRIVATE KEY-----",
                                "-----END RSA PRIVATE KEY-----",
@@ -1110,9 +1191,7 @@ Serial.println("mbedtls_pk_parse_key:Mem Check:" + String::format("%d",System.fr
 
     if( ret == 0 )
     {
-        Serial.println("mbedtls_pk_parse_key:Mem Check(3):" + String::format("%d",System.freeMemory()));
         pk_info = mbedtls_pk_info_from_type( MBEDTLS_PK_RSA );
-        Serial.println("mbedtls_pk_parse_key:Mem Check(4):" + String::format("%d",System.freeMemory()));
         if( ( ret = mbedtls_pk_setup( pk, pk_info ) ) != 0 ||
             ( ret = pk_parse_key_pkcs1_der( mbedtls_pk_rsa( *pk ),
                                             pem.buf, pem.buflen ) ) != 0 )
@@ -1136,17 +1215,14 @@ Serial.println("mbedtls_pk_parse_key:Mem Check:" + String::format("%d",System.fr
     if( key[keylen - 1] != '\0' )
         ret = MBEDTLS_ERR_PEM_NO_HEADER_FOOTER_PRESENT;
     else
-        Serial.println("mbedtls_pk_parse_key:Mem Check(5):" + String::format("%d",System.freeMemory()));
         ret = mbedtls_pem_read_buffer( &pem,
                                "-----BEGIN EC PRIVATE KEY-----",
                                "-----END EC PRIVATE KEY-----",
                                key, pwd, pwdlen, &len );
     if( ret == 0 )
     {
-        Serial.println("mbedtls_pk_parse_key:Mem Check(6):" + String::format("%d",System.freeMemory()));
         pk_info = mbedtls_pk_info_from_type( MBEDTLS_PK_ECKEY );
 
-        Serial.println("mbedtls_pk_parse_key:Mem Check(7):" + String::format("%d",System.freeMemory()));
         if( ( ret = mbedtls_pk_setup( pk, pk_info ) ) != 0 ||
             ( ret = pk_parse_key_sec1_der( mbedtls_pk_ec( *pk ),
                                            pem.buf, pem.buflen ) ) != 0 )
@@ -1169,14 +1245,12 @@ Serial.println("mbedtls_pk_parse_key:Mem Check:" + String::format("%d",System.fr
     if( key[keylen - 1] != '\0' )
         ret = MBEDTLS_ERR_PEM_NO_HEADER_FOOTER_PRESENT;
     else
-        Serial.println("mbedtls_pk_parse_key:Mem Check(8):" + String::format("%d",System.freeMemory()));
         ret = mbedtls_pem_read_buffer( &pem,
                                "-----BEGIN PRIVATE KEY-----",
                                "-----END PRIVATE KEY-----",
                                key, NULL, 0, &len );
     if( ret == 0 )
     {
-        Serial.println("mbedtls_pk_parse_key:Mem Check(9):" + String::format("%d",System.freeMemory()));
         if( ( ret = pk_parse_key_pkcs8_unencrypted_der( pk,
                                                 pem.buf, pem.buflen ) ) != 0 )
         {
@@ -1194,14 +1268,12 @@ Serial.println("mbedtls_pk_parse_key:Mem Check:" + String::format("%d",System.fr
     if( key[keylen - 1] != '\0' )
         ret = MBEDTLS_ERR_PEM_NO_HEADER_FOOTER_PRESENT;
     else
-        Serial.println("mbedtls_pk_parse_key:Mem Check(10):" + String::format("%d",System.freeMemory()));
         ret = mbedtls_pem_read_buffer( &pem,
                                "-----BEGIN ENCRYPTED PRIVATE KEY-----",
                                "-----END ENCRYPTED PRIVATE KEY-----",
                                key, NULL, 0, &len );
     if( ret == 0 )
     {
-        Serial.println("mbedtls_pk_parse_key:Mem Check(11):" + String::format("%d",System.freeMemory()));
         if( ( ret = pk_parse_key_pkcs8_encrypted_der( pk,
                                                       pem.buf, pem.buflen,
                                                       pwd, pwdlen ) ) != 0 )
@@ -1231,13 +1303,11 @@ Serial.println("mbedtls_pk_parse_key:Mem Check:" + String::format("%d",System.fr
     {
         unsigned char *key_copy;
 
-        Serial.println("mbedtls_pk_parse_key:Mem Check(12):" + String::format("%d",System.freeMemory()));
         if( ( key_copy = (unsigned char *)mbedtls_calloc( 1, keylen ) ) == NULL )
             return( MBEDTLS_ERR_PK_ALLOC_FAILED );
 
         memcpy( key_copy, key, keylen );
 
-        Serial.println("mbedtls_pk_parse_key:Mem Check(13):" + String::format("%d",System.freeMemory()));
         ret = pk_parse_key_pkcs8_encrypted_der( pk, key_copy, keylen,
                                                 pwd, pwdlen );
 
@@ -1257,7 +1327,6 @@ Serial.println("mbedtls_pk_parse_key:Mem Check:" + String::format("%d",System.fr
     }
 #endif /* MBEDTLS_PKCS12_C || MBEDTLS_PKCS5_C */
 
-    Serial.println("mbedtls_pk_parse_key:Mem Check(13):" + String::format("%d",System.freeMemory()));
     if( ( ret = pk_parse_key_pkcs8_unencrypted_der( pk, key, keylen ) ) == 0 )
         return( 0 );
 
@@ -1266,9 +1335,7 @@ Serial.println("mbedtls_pk_parse_key:Mem Check:" + String::format("%d",System.fr
 
 #if defined(MBEDTLS_RSA_C)
 
-    Serial.println("mbedtls_pk_parse_key:Mem Check(14):" + String::format("%d",System.freeMemory()));
     pk_info = mbedtls_pk_info_from_type( MBEDTLS_PK_RSA );
-    Serial.println("mbedtls_pk_parse_key:Mem Check(15):" + String::format("%d",System.freeMemory()));
     if( mbedtls_pk_setup( pk, pk_info ) == 0 &&
         pk_parse_key_pkcs1_der( mbedtls_pk_rsa( *pk ), key, keylen ) == 0 )
     {
@@ -1280,9 +1347,7 @@ Serial.println("mbedtls_pk_parse_key:Mem Check:" + String::format("%d",System.fr
 #endif /* MBEDTLS_RSA_C */
 
 #if defined(MBEDTLS_ECP_C)
-    Serial.println("mbedtls_pk_parse_key:Mem Check(17):" + String::format("%d",System.freeMemory()));
     pk_info = mbedtls_pk_info_from_type( MBEDTLS_PK_ECKEY );
-    Serial.println("mbedtls_pk_parse_key:Mem Check(18):" + String::format("%d",System.freeMemory()));
     if( mbedtls_pk_setup( pk, pk_info ) == 0 &&
         pk_parse_key_sec1_der( mbedtls_pk_ec( *pk ),
                                key, keylen ) == 0 )
@@ -1327,14 +1392,12 @@ int mbedtls_pk_parse_public_key( mbedtls_pk_context *ctx,
     PK_VALIDATE_RET( key != NULL || keylen == 0 );
 
 #if defined(MBEDTLS_PEM_PARSE_C)
-Serial.println("mbedtls_pk_parse_key:Mem Check(5_1):" + String::format("%d",System.freeMemory()));
     mbedtls_pem_init( &pem );
 #if defined(MBEDTLS_RSA_C)
     /* Avoid calling mbedtls_pem_read_buffer() on non-null-terminated string */
     if( key[keylen - 1] != '\0' )
         ret = MBEDTLS_ERR_PEM_NO_HEADER_FOOTER_PRESENT;
     else
-    Serial.println("mbedtls_pk_parse_key:Mem Check(5_2):" + String::format("%d",System.freeMemory()));
         ret = mbedtls_pem_read_buffer( &pem,
                                "-----BEGIN RSA PUBLIC KEY-----",
                                "-----END RSA PUBLIC KEY-----",
@@ -1343,13 +1406,12 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(5_1):" + String::format("%d",Syst
     if( ret == 0 )
     {
         p = pem.buf;
-        Serial.println("mbedtls_pk_parse_key:Mem Check(5_3):" + String::format("%d",System.freeMemory()));
         if( ( pk_info = mbedtls_pk_info_from_type( MBEDTLS_PK_RSA ) ) == NULL )
             return( MBEDTLS_ERR_PK_UNKNOWN_PK_ALG );
-Serial.println("mbedtls_pk_parse_key:Mem Check(5_4):" + String::format("%d",System.freeMemory()));
+
         if( ( ret = mbedtls_pk_setup( ctx, pk_info ) ) != 0 )
             return( ret );
-Serial.println("mbedtls_pk_parse_key:Mem Check(5_5):" + String::format("%d",System.freeMemory()));
+
         if ( ( ret = pk_get_rsapubkey( &p, p + pem.buflen, mbedtls_pk_rsa( *ctx ) ) ) != 0 )
             mbedtls_pk_free( ctx );
 
@@ -1367,7 +1429,6 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(5_5):" + String::format("%d",Syst
     if( key[keylen - 1] != '\0' )
         ret = MBEDTLS_ERR_PEM_NO_HEADER_FOOTER_PRESENT;
     else
-    Serial.println("mbedtls_pk_parse_key:Mem Check(5_6):" + String::format("%d",System.freeMemory()));
         ret = mbedtls_pem_read_buffer( &pem,
                 "-----BEGIN PUBLIC KEY-----",
                 "-----END PUBLIC KEY-----",
@@ -1379,7 +1440,7 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(5_5):" + String::format("%d",Syst
          * Was PEM encoded
          */
         p = pem.buf;
-Serial.println("mbedtls_pk_parse_key:Mem Check(5_7):" + String::format("%d",System.freeMemory()));
+
         ret = mbedtls_pk_parse_subpubkey( &p,  p + pem.buflen, ctx );
         mbedtls_pem_free( &pem );
         return( ret );
@@ -1393,15 +1454,13 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(5_7):" + String::format("%d",Syst
 #endif /* MBEDTLS_PEM_PARSE_C */
 
 #if defined(MBEDTLS_RSA_C)
-Serial.println("mbedtls_pk_parse_key:Mem Check(5_8):" + String::format("%d",System.freeMemory()));
     if( ( pk_info = mbedtls_pk_info_from_type( MBEDTLS_PK_RSA ) ) == NULL )
         return( MBEDTLS_ERR_PK_UNKNOWN_PK_ALG );
-Serial.println("mbedtls_pk_parse_key:Mem Check(5_9):" + String::format("%d",System.freeMemory()));
+
     if( ( ret = mbedtls_pk_setup( ctx, pk_info ) ) != 0 )
         return( ret );
 
     p = (unsigned char *)key;
-    Serial.println("mbedtls_pk_parse_key:Mem Check(5_10):" + String::format("%d",System.freeMemory()));
     ret = pk_get_rsapubkey( &p, p + keylen, mbedtls_pk_rsa( *ctx ) );
     if( ret == 0 )
     {
@@ -1414,7 +1473,7 @@ Serial.println("mbedtls_pk_parse_key:Mem Check(5_9):" + String::format("%d",Syst
     }
 #endif /* MBEDTLS_RSA_C */
     p = (unsigned char *) key;
-Serial.println("mbedtls_pk_parse_key:Mem Check(5_11):" + String::format("%d",System.freeMemory()));
+
     ret = mbedtls_pk_parse_subpubkey( &p, p + keylen, ctx );
 
     return( ret );

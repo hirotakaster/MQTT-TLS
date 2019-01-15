@@ -226,7 +226,7 @@
 //#define MBEDTLS_PLATFORM_FPRINTF_ALT
 //#define MBEDTLS_PLATFORM_PRINTF_ALT
 //#define MBEDTLS_PLATFORM_SNPRINTF_ALT
-#define MBEDTLS_PLATFORM_NV_SEED_ALT
+//#define MBEDTLS_PLATFORM_NV_SEED_ALT
 //#define MBEDTLS_PLATFORM_SETUP_TEARDOWN_ALT
 
 /**
@@ -963,7 +963,7 @@
  *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA
  *      MBEDTLS_TLS_ECDHE_ECDSA_WITH_RC4_128_SHA
  */
-#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
+//#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
 
 /**
  * \def MBEDTLS_KEY_EXCHANGE_ECDH_ECDSA_ENABLED
@@ -1099,7 +1099,7 @@
  *
  * Uncomment this macro to disable the built-in platform entropy functions.
  */
- #define MBEDTLS_NO_PLATFORM_ENTROPY //ic modified
+//#define MBEDTLS_NO_PLATFORM_ENTROPY
 
 /**
  * \def MBEDTLS_ENTROPY_FORCE_SHA256
@@ -1143,7 +1143,7 @@
  * \note The entropy collector will write to the seed file before entropy is
  *       given to an external source, to update it.
  */
-#define MBEDTLS_ENTROPY_NV_SEED
+//#define MBEDTLS_ENTROPY_NV_SEED
 
 /**
  * \def MBEDTLS_MEMORY_DEBUG
@@ -1210,7 +1210,7 @@
  * Uncomment this macro to disable the use of CRT in RSA.
  *
  */
-#define MBEDTLS_RSA_NO_CRT
+//#define MBEDTLS_RSA_NO_CRT
 
 /**
  * \def MBEDTLS_SELF_TEST
@@ -1872,7 +1872,7 @@
  *          library/x509write_crt.c
  *          library/x509write_csr.c
  */
-#define MBEDTLS_ASN1_WRITE_C
+//#define MBEDTLS_ASN1_WRITE_C
 
 /**
  * \def MBEDTLS_BASE64_C
@@ -2184,7 +2184,7 @@
  *
  * Requires: MBEDTLS_ECP_C
  */
-#define MBEDTLS_ECDH_C
+//#define MBEDTLS_ECDH_C
 
 /**
  * \def MBEDTLS_ECDSA_C
@@ -2199,7 +2199,7 @@
  *
  * Requires: MBEDTLS_ECP_C, MBEDTLS_ASN1_WRITE_C, MBEDTLS_ASN1_PARSE_C
  */
-#define MBEDTLS_ECDSA_C
+//#define MBEDTLS_ECDSA_C
 
 /**
  * \def MBEDTLS_ECJPAKE_C
@@ -2232,7 +2232,7 @@
  *
  * Requires: MBEDTLS_BIGNUM_C and at least one MBEDTLS_ECP_DP_XXX_ENABLED
  */
-#define MBEDTLS_ECP_C
+//#define MBEDTLS_ECP_C
 
 /**
  * \def MBEDTLS_ENTROPY_C
@@ -2324,7 +2324,7 @@
  *
  * Uncomment to enable the HMAC_DRBG random number geerator.
  */
-#define MBEDTLS_HMAC_DRBG_C
+//#define MBEDTLS_HMAC_DRBG_C
 
 /**
  * \def MBEDTLS_NIST_KW_C
@@ -2714,7 +2714,7 @@
  *
  * This module adds support for SHA-384 and SHA-512.
  */
-//#define MBEDTLS_SHA512_C
+#define MBEDTLS_SHA512_C
 
 /**
  * \def MBEDTLS_SSL_CACHE_C
@@ -2978,16 +2978,16 @@
  */
 
 /* MPI / BIGNUM options */
-#define MBEDTLS_MPI_WINDOW_SIZE            1 /**< Maximum windows size used. */
+//#define MBEDTLS_MPI_WINDOW_SIZE            6 /**< Maximum windows size used. */
 //#define MBEDTLS_MPI_MAX_SIZE            1024 /**< Maximum number of bytes for usable MPIs. */
 
 /* CTR_DRBG options */
-#define MBEDTLS_CTR_DRBG_ENTROPY_LEN               32 /**< Amount of entropy used per seed by default (48 with SHA-512, 32 with SHA-256) */
+//#define MBEDTLS_CTR_DRBG_ENTROPY_LEN               48 /**< Amount of entropy used per seed by default (48 with SHA-512, 32 with SHA-256) */
 //#define MBEDTLS_CTR_DRBG_RESEED_INTERVAL        10000 /**< Interval before reseed is performed by default */
 //#define MBEDTLS_CTR_DRBG_MAX_INPUT                256 /**< Maximum number of additional input bytes */
 //#define MBEDTLS_CTR_DRBG_MAX_REQUEST             1024 /**< Maximum number of requested bytes per call */
 //#define MBEDTLS_CTR_DRBG_MAX_SEED_INPUT           384 /**< Maximum size of (re)seed buffer */
-#define MBEDTLS_CTR_DRBG_USE_128_BIT_KEY              /**< Use 128-bit key for CTR_DRBG - may reduce security (see ctr_drbg.h) */
+//#define MBEDTLS_CTR_DRBG_USE_128_BIT_KEY              /**< Use 128-bit key for CTR_DRBG - may reduce security (see ctr_drbg.h) */
 
 /* HMAC_DRBG options */
 //#define MBEDTLS_HMAC_DRBG_RESEED_INTERVAL   10000 /**< Interval before reseed is performed by default */
@@ -2997,8 +2997,8 @@
 
 /* ECP options */
 //#define MBEDTLS_ECP_MAX_BITS             521 /**< Maximum bit size of groups */
-#define MBEDTLS_ECP_WINDOW_SIZE            2 /**< Minimum window size used (Max:6) */
-#define MBEDTLS_ECP_FIXED_POINT_OPTIM      0 /**< Disable fixed-point speed-up */
+//#define MBEDTLS_ECP_WINDOW_SIZE            6 /**< Maximum window size used */
+//#define MBEDTLS_ECP_FIXED_POINT_OPTIM      1 /**< Enable fixed-point speed-up */
 
 /* Entropy options */
 //#define MBEDTLS_ENTROPY_MAX_SOURCES                20 /**< Maximum number of sources supported */

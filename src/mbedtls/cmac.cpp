@@ -62,7 +62,7 @@
 #define mbedtls_free       free
 #if defined(MBEDTLS_SELF_TEST)
 #include <stdio.h>
-#define mbedtls_printf     Serial.println
+#define mbedtls_printf     printf
 #endif /* MBEDTLS_SELF_TEST */
 #endif /* MBEDTLS_PLATFORM_C */
 

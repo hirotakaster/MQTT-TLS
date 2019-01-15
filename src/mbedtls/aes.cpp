@@ -24,7 +24,6 @@
  *  http://csrc.nist.gov/encryption/aes/rijndael/Rijndael.pdf
  *  http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf
  */
-#include "Arduino.h"
 
 #if !defined(MBEDTLS_CONFIG_FILE)
 #include "mbedtls/config.h"
@@ -51,7 +50,7 @@
 #include "mbedtls/platform.h"
 #else
 #include <stdio.h>
-#define mbedtls_printf Serial.println
+#define mbedtls_printf printf
 #endif /* MBEDTLS_PLATFORM_C */
 #endif /* MBEDTLS_SELF_TEST */
 
@@ -519,7 +518,7 @@ static void aes_gen_tables( void )
 void mbedtls_aes_init( mbedtls_aes_context *ctx )
 {
     AES_VALIDATE( ctx != NULL );
-    Serial.println("mbedtls_aes_init:Mem Check(1):" + String::format("%d",System.freeMemory()));
+
     memset( ctx, 0, sizeof( mbedtls_aes_context ) );
 }
 
@@ -574,7 +573,6 @@ int mbedtls_aes_setkey_enc( mbedtls_aes_context *ctx, const unsigned char *key,
 #if !defined(MBEDTLS_AES_ROM_TABLES)
     if( aes_init_done == 0 )
     {
-        Serial.println("mbedtls_aes_setkey_enc:Mem Check(1):" + String::format("%d",System.freeMemory()));
         aes_gen_tables();
         aes_init_done = 1;
     }
@@ -582,7 +580,6 @@ int mbedtls_aes_setkey_enc( mbedtls_aes_context *ctx, const unsigned char *key,
 
 #if defined(MBEDTLS_PADLOCK_C) && defined(MBEDTLS_PADLOCK_ALIGN16)
     if( aes_padlock_ace == -1 )
-    Serial.println("mbedtls_aes_setkey_enc:Mem Check(2):" + String::format("%d",System.freeMemory()));
         aes_padlock_ace = mbedtls_padlock_has_support( MBEDTLS_PADLOCK_ACE );
 
     if( aes_padlock_ace )
@@ -592,15 +589,12 @@ int mbedtls_aes_setkey_enc( mbedtls_aes_context *ctx, const unsigned char *key,
     ctx->rk = RK = ctx->buf;
 
 #if defined(MBEDTLS_AESNI_C) && defined(MBEDTLS_HAVE_X86_64)
-    Serial.println("mbedtls_aes_setkey_enc:Mem Check(3):" + String::format("%d",System.freeMemory()));
     if( mbedtls_aesni_has_support( MBEDTLS_AESNI_AES ) )
-        Serial.println("mbedtls_aes_setkey_enc:Mem Check(4):" + String::format("%d",System.freeMemory()));
         return( mbedtls_aesni_setkey_enc( (unsigned char *) ctx->rk, key, keybits ) );
 #endif
 
     for( i = 0; i < ( keybits >> 5 ); i++ )
     {
-        Serial.println("mbedtls_aes_setkey_enc:Mem Check(5):" + String::format("%d",System.freeMemory()));
         GET_UINT32_LE( RK[i], key, i << 2 );
     }
 

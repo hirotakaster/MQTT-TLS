@@ -225,6 +225,34 @@ int mbedtls_entropy_update_manual( mbedtls_entropy_context *ctx,
 int mbedtls_entropy_update_nv_seed( mbedtls_entropy_context *ctx );
 #endif /* MBEDTLS_ENTROPY_NV_SEED */
 
+#if defined(MBEDTLS_FS_IO)
+/**
+ * \brief               Write a seed file
+ *
+ * \param ctx           Entropy context
+ * \param path          Name of the file
+ *
+ * \return              0 if successful,
+ *                      MBEDTLS_ERR_ENTROPY_FILE_IO_ERROR on file error, or
+ *                      MBEDTLS_ERR_ENTROPY_SOURCE_FAILED
+ */
+int mbedtls_entropy_write_seed_file( mbedtls_entropy_context *ctx, const char *path );
+
+/**
+ * \brief               Read and update a seed file. Seed is added to this
+ *                      instance. No more than MBEDTLS_ENTROPY_MAX_SEED_SIZE bytes are
+ *                      read from the seed file. The rest is ignored.
+ *
+ * \param ctx           Entropy context
+ * \param path          Name of the file
+ *
+ * \return              0 if successful,
+ *                      MBEDTLS_ERR_ENTROPY_FILE_IO_ERROR on file error,
+ *                      MBEDTLS_ERR_ENTROPY_SOURCE_FAILED
+ */
+int mbedtls_entropy_update_seed_file( mbedtls_entropy_context *ctx, const char *path );
+#endif /* MBEDTLS_FS_IO */
+
 #if defined(MBEDTLS_SELF_TEST)
 /**
  * \brief          Checkup routine

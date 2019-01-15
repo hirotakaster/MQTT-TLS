@@ -808,7 +808,7 @@ cleanup:
 #include "mbedtls/platform.h"
 #else
 #include <stdio.h>
-#define mbedtls_printf     Serial.println
+#define mbedtls_printf     printf
 #endif
 
 #if !defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED) || \
