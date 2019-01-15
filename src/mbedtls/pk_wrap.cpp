@@ -243,7 +243,7 @@ static int eckey_verify_wrap( void *ctx, mbedtls_md_type_t md_alg,
 
     mbedtls_ecdsa_init( &ecdsa );
 
-    if( ( ret = mbedtls_ecdsa_from_keypair( &ecdsa, ctx ) ) == 0 )
+    if( ( ret = mbedtls_ecdsa_from_keypair( &ecdsa, (const mbedtls_ecp_keypair*)ctx ) ) == 0 )
         ret = ecdsa_verify_wrap( &ecdsa, md_alg, hash, hash_len, sig, sig_len );
 
     mbedtls_ecdsa_free( &ecdsa );
@@ -261,7 +261,7 @@ static int eckey_sign_wrap( void *ctx, mbedtls_md_type_t md_alg,
 
     mbedtls_ecdsa_init( &ecdsa );
 
-    if( ( ret = mbedtls_ecdsa_from_keypair( &ecdsa, ctx ) ) == 0 )
+    if( ( ret = mbedtls_ecdsa_from_keypair( &ecdsa, (const mbedtls_ecp_keypair*)ctx ) ) == 0 )
         ret = ecdsa_sign_wrap( &ecdsa, md_alg, hash, hash_len, sig, sig_len,
                                f_rng, p_rng );
 
@@ -387,7 +387,7 @@ static void *eckey_alloc_wrap( void )
     void *ctx = mbedtls_calloc( 1, sizeof( mbedtls_ecp_keypair ) );
 
     if( ctx != NULL )
-        mbedtls_ecp_keypair_init( ctx );
+        mbedtls_ecp_keypair_init( (mbedtls_ecp_keypair*)ctx );
 
     return( ctx );
 }

@@ -47,7 +47,7 @@
 #include "mbedtls/platform.h"
 #else
 #include <stdio.h>
-#define mbedtls_printf printf
+#define mbedtls_printf Serial.println
 #endif /* MBEDTLS_SELF_TEST */
 #endif /* MBEDTLS_PLATFORM_C */
 
@@ -385,71 +385,6 @@ void mbedtls_hmac_drbg_free( mbedtls_hmac_drbg_context *ctx )
     mbedtls_md_free( &ctx->md_ctx );
     mbedtls_platform_zeroize( ctx, sizeof( mbedtls_hmac_drbg_context ) );
 }
-
-#if defined(MBEDTLS_FS_IO)
-int mbedtls_hmac_drbg_write_seed_file( mbedtls_hmac_drbg_context *ctx, const char *path )
-{
-    int ret;
-    FILE *f;
-    unsigned char buf[ MBEDTLS_HMAC_DRBG_MAX_INPUT ];
-
-    if( ( f = fopen( path, "wb" ) ) == NULL )
-        return( MBEDTLS_ERR_HMAC_DRBG_FILE_IO_ERROR );
-
-    if( ( ret = mbedtls_hmac_drbg_random( ctx, buf, sizeof( buf ) ) ) != 0 )
-        goto exit;
-
-    if( fwrite( buf, 1, sizeof( buf ), f ) != sizeof( buf ) )
-    {
-        ret = MBEDTLS_ERR_HMAC_DRBG_FILE_IO_ERROR;
-        goto exit;
-    }
-
-    ret = 0;
-
-exit:
-    fclose( f );
-    mbedtls_platform_zeroize( buf, sizeof( buf ) );
-
-    return( ret );
-}
-
-int mbedtls_hmac_drbg_update_seed_file( mbedtls_hmac_drbg_context *ctx, const char *path )
-{
-    int ret = 0;
-    FILE *f = NULL;
-    size_t n;
-    unsigned char buf[ MBEDTLS_HMAC_DRBG_MAX_INPUT ];
-    unsigned char c;
-
-    if( ( f = fopen( path, "rb" ) ) == NULL )
-        return( MBEDTLS_ERR_HMAC_DRBG_FILE_IO_ERROR );
-
-    n = fread( buf, 1, sizeof( buf ), f );
-    if( fread( &c, 1, 1, f ) != 0 )
-    {
-        ret = MBEDTLS_ERR_HMAC_DRBG_INPUT_TOO_BIG;
-        goto exit;
-    }
-    if( n == 0 || ferror( f ) )
-    {
-        ret = MBEDTLS_ERR_HMAC_DRBG_FILE_IO_ERROR;
-        goto exit;
-    }
-    fclose( f );
-    f = NULL;
-
-    ret = mbedtls_hmac_drbg_update_ret( ctx, buf, n );
-
-exit:
-    mbedtls_platform_zeroize( buf, sizeof( buf ) );
-    if( f != NULL )
-        fclose( f );
-    if( ret != 0 )
-        return( ret );
-    return( mbedtls_hmac_drbg_write_seed_file( ctx, path ) );
-}
-#endif /* MBEDTLS_FS_IO */
 
 
 #if defined(MBEDTLS_SELF_TEST)
