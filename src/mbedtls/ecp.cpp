@@ -1145,7 +1145,7 @@ static int ecp_normalize_jac_many( const mbedtls_ecp_group *grp,
         return( mbedtls_internal_ecp_normalize_jac_many( grp, T, T_size ) );
 #endif
 
-    if( ( c = mbedtls_calloc( T_size, sizeof( mbedtls_mpi ) ) ) == NULL )
+    if( ( c = (mbedtls_mpi*)mbedtls_calloc( T_size, sizeof( mbedtls_mpi ) ) ) == NULL )
         return( MBEDTLS_ERR_ECP_ALLOC_FAILED );
 
     for( i = 0; i < T_size; i++ )
@@ -2045,7 +2045,7 @@ static int ecp_mul_comb( mbedtls_ecp_group *grp, mbedtls_ecp_point *R,
 #endif
     /* Allocate table if we didn't have any */
     {
-        T = mbedtls_calloc( T_size, sizeof( mbedtls_ecp_point ) );
+        T = (mbedtls_ecp_point*)mbedtls_calloc( T_size, sizeof( mbedtls_ecp_point ) );
         if( T == NULL )
         {
             ret = MBEDTLS_ERR_ECP_ALLOC_FAILED;
