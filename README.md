@@ -1,6 +1,12 @@
 # MQTT-TLS for Photon, Spark Core
 <a href="http://mqtt.org/" target=_blank>MQTT</a> publish/subscribe TLS library for Photon, Spark Core. This library based <a href="https://github.com/hirotakaster/MQTT">MQTT for Photon, Spark Core</a> and <a href="https://github.com/hirotakaster/TlsTcpClient">TlsTcpClient</a>(using mbedTLS 2.16.0).
 
+## Chiper List
+* TLS_RSA_WITH_AES_[128|256]_GCM_SHA[1|256|512]
+* TLS_ECDHE_ECDSA_WITH_AES_[128|256]_GCM_SHA[385|256]
+* TLS_EMPTY_RENOGOTIATION_INFO_SCSV
+
+
 ## Source Code
 This lightweight library source code are only 2 files. firmware -> MQTT-TLS.cpp, MQTT-TLS.h.
 
@@ -115,3 +121,17 @@ void loop() {
 }
 
 ```
+
+## Configure mbedTLS options
+Developer could easy to change the mbedTLS options (mbedtls/config.h) for application and firmware size. This library use a lot of Flash area for encryption method and limit to user application size. Because of that's developer could enable/disable the mbedTLS option with comment out the option parameters for the Flash spaces. When enable/disable the option parameter, it's carefully check the server/application TLS connectivity and security.
+
+Here is application firmware size(byte) and mbedTLS options on Particle Workbench(local compiler).
+
+| device | RSA/ECDSA,ECDH(default) | RSA only | remove SHA512 option |
+----|----|----|----
+| Argon(0.8.0.-rc27) | 90308 | 76964 | 70884 |
+| Photon(1.0.0) | 89492 | 76164 | 70100 |
+
+(exp) If application use TLS_RSA_WITH_AES_256_GCM_SHA256 certification only, developer could comment out the following ECC/SHA512 options from mbedtls/config.h for Flash spaces.
+MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED,MBEDTLS_ASN1_WRITE_C,MBEDTLS_ECDH_C,MBEDTLS_ECDSA_C,MBEDTLS_ECP_C,MBEDTLS_SHA512_C
+
