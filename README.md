@@ -135,7 +135,8 @@ Here is application firmware size(byte) and mbedTLS options on Particle Workbenc
 exp.1) If application use TLS_RSA_WITH_AES_256_GCM_SHA256 certification only, developer could comment out the following ECC/SHA512 options from mbedtls/config.h for Flash spaces.
 MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED,MBEDTLS_ASN1_WRITE_C,MBEDTLS_ECDH_C,MBEDTLS_ECDSA_C,MBEDTLS_ECP_C,MBEDTLS_SHA512_C
 
-exp.2) Here is the default config.h and config-mini.h firmware size comparison with a1-example.cpp.
+exp.2) Here is the default config.h and config-mini.h application size comparison with a1-example.cpp on Particle Photon firmware version 1.0.1.
+
 config.h
 
 |text|data|bss|de|hex|filename|
