@@ -148,5 +148,5 @@ config-mini.h
 
 |text|data|bss|de|hex|filename|
 ----|----|----|----|----|----
-|66452|148|11756|78356|13214|a1-example.elf|
+|66868|148|11736|78752|133a0|a1-example.elf|
 
