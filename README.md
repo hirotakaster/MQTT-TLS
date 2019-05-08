@@ -132,6 +132,20 @@ Here is application firmware size(byte) and mbedTLS options on Particle Workbenc
 | Argon(0.8.0.-rc27) | 90308 | 76964 | 70884 |
 | Photon(1.0.0) | 89492 | 76164 | 70100 |
 
-(exp) If application use TLS_RSA_WITH_AES_256_GCM_SHA256 certification only, developer could comment out the following ECC/SHA512 options from mbedtls/config.h for Flash spaces.
+exp.1) If application use TLS_RSA_WITH_AES_256_GCM_SHA256 certification only, developer could comment out the following ECC/SHA512 options from mbedtls/config.h for Flash spaces.
 MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED,MBEDTLS_ASN1_WRITE_C,MBEDTLS_ECDH_C,MBEDTLS_ECDSA_C,MBEDTLS_ECP_C,MBEDTLS_SHA512_C
+
+exp.2) Here is the default config.h and config-mini.h firmware size comparison with a1-example.cpp.
+config.h
+
+|text|data|bss|de|hex|filename|
+----|----|----|----|----|----
+|89492|168|11896|101556|18cb4|a1-example.elf|
+
+
+config-mini.h
+
+|text|data|bss|de|hex|filename|
+----|----|----|----|----|----
+|66452|148|11756|78356|13214|a1-example.elf|
 
