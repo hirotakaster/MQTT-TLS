@@ -118,7 +118,7 @@ static void *ccm_ctx_alloc( void )
 
 static void ccm_ctx_free( void *ctx )
 {
-    mbedtls_ccm_free( ctx );
+    mbedtls_ccm_free( (mbedtls_ccm_context *)ctx );
     mbedtls_free( ctx );
 }
 #endif /* MBEDTLS_CCM_C */
