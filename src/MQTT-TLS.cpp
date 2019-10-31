@@ -399,7 +399,7 @@ bool MQTT::publish(const char* topic, const uint8_t* payload, unsigned int pleng
     if (isConnected()) {
         // Leave room in the buffer for header and variable length field
         uint16_t length = 5;
-        memset(buffer, 0, sizeof(buffer));
+        memset(buffer, 0, sizeof(uint8_t) * this->maxpacketsize);
 
         length = writeString(topic, buffer, length);
 

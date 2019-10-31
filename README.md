@@ -12,7 +12,7 @@ This lightweight library source code are only 2 files. firmware -> MQTT-TLS.cpp,
 
 Application can use QOS0,1,2 and retain flag when send a publish message.
 
-This library tested on test.mosquitto.org, iot.eclipse.org, AWS IoT Gateway, Google IoT Core, Azure IoT Hub MQTT servers.
+This library tested on test.mosquitto.org, mqtt.eclipse.org, AWS IoT Gateway, Google IoT Core, Azure IoT Hub MQTT servers.
 
 
 ## Example
@@ -66,9 +66,9 @@ const char letencryptCaPem[] = LET_ENCRYPT_CA_PEM;
  * MQTT client(server, 1883, callback);
  * want to use domain name,
  * MQTT client("www.sample.com", 1883, callback);
- * iot.eclipse.org is Eclipse Open MQTT Broker: https://iot.eclipse.org/getting-started
+ * mqtt.eclipse.org is Eclipse Open MQTT Broker: https://iot.eclipse.org/getting-started
  **/
-MQTT client("iot.eclipse.org", 8883, callback);
+MQTT client("mqtt.eclipse.org", 8883, callback);
 
 // recieve message
 void callback(char* topic, byte* payload, unsigned int length) {
