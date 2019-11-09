@@ -51,7 +51,7 @@
 #include "mbedtls/platform.h"
 #else
 #include <stdio.h>
-#define mbedtls_printf printf
+#define mbedtls_printf Serial.println
 #endif
 
 #if defined(MBEDTLS_ASN1_PARSE_C)

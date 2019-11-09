@@ -115,10 +115,12 @@ static int getrandom_wrapper( void *buf, size_t buflen, unsigned int flags )
 #endif /* __linux__ */
 
 #include <stdio.h>
+/* WE CAN'T RUN THIS TYPE OF ENTROPY POLL ON ELECTRON
 
 int mbedtls_platform_entropy_poll( void *data,
                            unsigned char *output, size_t len, size_t *olen )
 {
+
     FILE *file;
     size_t read_len;
     int ret;
@@ -133,10 +135,10 @@ int mbedtls_platform_entropy_poll( void *data,
     }
     else if( errno != ENOSYS )
         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
-    /* Fall through if the system call isn't known. */
+    // Fall through if the system call isn't known.
 #else
     ((void) ret);
-#endif /* HAVE_GETRANDOM */
+#endif // HAVE_GETRANDOM
 
     *olen = 0;
 
@@ -155,7 +157,9 @@ int mbedtls_platform_entropy_poll( void *data,
     *olen = len;
 
     return( 0 );
+
 }
+*/
 #endif /* _WIN32 && !EFIX64 && !EFI32 */
 #endif /* !MBEDTLS_NO_PLATFORM_ENTROPY */
 

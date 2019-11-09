@@ -238,47 +238,7 @@ int mbedtls_platform_set_time( mbedtls_time_t (*time_func)( mbedtls_time_t* time
 #endif /* MBEDTLS_HAVE_TIME */
 
 #if defined(MBEDTLS_ENTROPY_NV_SEED)
-#if !defined(MBEDTLS_PLATFORM_NO_STD_FUNCTIONS) && defined(MBEDTLS_FS_IO)
-/* Default implementations for the platform independent seed functions use
- * standard libc file functions to read from and write to a pre-defined filename
- */
-int mbedtls_platform_std_nv_seed_read( unsigned char *buf, size_t buf_len )
-{
-    FILE *file;
-    size_t n;
 
-    if( ( file = fopen( MBEDTLS_PLATFORM_STD_NV_SEED_FILE, "rb" ) ) == NULL )
-        return( -1 );
-
-    if( ( n = fread( buf, 1, buf_len, file ) ) != buf_len )
-    {
-        fclose( file );
-        mbedtls_platform_zeroize( buf, buf_len );
-        return( -1 );
-    }
-
-    fclose( file );
-    return( (int)n );
-}
-
-int mbedtls_platform_std_nv_seed_write( unsigned char *buf, size_t buf_len )
-{
-    FILE *file;
-    size_t n;
-
-    if( ( file = fopen( MBEDTLS_PLATFORM_STD_NV_SEED_FILE, "w" ) ) == NULL )
-        return -1;
-
-    if( ( n = fwrite( buf, 1, buf_len, file ) ) != buf_len )
-    {
-        fclose( file );
-        return -1;
-    }
-
-    fclose( file );
-    return( (int)n );
-}
-#endif /* MBEDTLS_PLATFORM_NO_STD_FUNCTIONS */
 
 #if defined(MBEDTLS_PLATFORM_NV_SEED_ALT)
 #if !defined(MBEDTLS_PLATFORM_STD_NV_SEED_READ)

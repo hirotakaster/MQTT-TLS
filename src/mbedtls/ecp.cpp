@@ -97,7 +97,7 @@
 #else
 #include <stdlib.h>
 #include <stdio.h>
-#define mbedtls_printf     printf
+#define mbedtls_printf     Serial.println
 #define mbedtls_calloc    calloc
 #define mbedtls_free       free
 #endif
