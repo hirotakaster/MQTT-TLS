@@ -294,22 +294,28 @@ int mbedtls_asn1_write_bitstring( unsigned char **p, unsigned char *start,
                           const unsigned char *buf, size_t bits )
 {
     int ret;
-    size_t len = 0, size;
+    size_t len = 0;
+    size_t unused_bits, byte_len;
 
-    size = ( bits / 8 ) + ( ( bits % 8 ) ? 1 : 0 );
+    byte_len = ( bits + 7 ) / 8;
+    unused_bits = ( byte_len * 8 ) - bits;
 
-    // Calculate byte length
-    //
-    if( *p < start || (size_t)( *p - start ) < size + 1 )
+    if( *p < start || (size_t)( *p - start ) < byte_len + 1 )
         return( MBEDTLS_ERR_ASN1_BUF_TOO_SMALL );
 
-    len = size + 1;
-    (*p) -= size;
-    memcpy( *p, buf, size );
+    len = byte_len + 1;
 
-    // Write unused bits
-    //
-    *--(*p) = (unsigned char) (size * 8 - bits);
+    /* Write the bitstring. Ensure the unused bits are zeroed */
+    if( byte_len > 0 )
+    {
+        byte_len--;
+        *--( *p ) = buf[byte_len] & ~( ( 0x1 << unused_bits ) - 1 );
+        ( *p ) -= byte_len;
+        memcpy( *p, buf, byte_len );
+    }
+
+    /* Write unused bits */
+    *--( *p ) = (unsigned char)unused_bits;
 
     MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
     MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_BIT_STRING ) );
@@ -370,7 +376,7 @@ mbedtls_asn1_named_data *mbedtls_asn1_store_named_data(
             return( NULL );
 
         cur->oid.len = oid_len;
-        cur->oid.p = (unsigned char*)mbedtls_calloc( 1, oid_len );
+        cur->oid.p = (unsigned char *)mbedtls_calloc( 1, oid_len );
         if( cur->oid.p == NULL )
         {
             mbedtls_free( cur );
@@ -380,7 +386,7 @@ mbedtls_asn1_named_data *mbedtls_asn1_store_named_data(
         memcpy( cur->oid.p, oid, oid_len );
 
         cur->val.len = val_len;
-        cur->val.p = (unsigned char*)mbedtls_calloc( 1, val_len );
+        cur->val.p = (unsigned char *)mbedtls_calloc( 1, val_len );
         if( cur->val.p == NULL )
         {
             mbedtls_free( cur->oid.p );
@@ -403,7 +409,7 @@ mbedtls_asn1_named_data *mbedtls_asn1_store_named_data(
             return( NULL );
 
         mbedtls_free( cur->val.p );
-        cur->val.p = (unsigned char*)p;
+        cur->val.p = (unsigned char *)p;
         cur->val.len = val_len;
     }
 

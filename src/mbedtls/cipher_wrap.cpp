@@ -118,7 +118,7 @@ static void *ccm_ctx_alloc( void )
 
 static void ccm_ctx_free( void *ctx )
 {
-    mbedtls_ccm_free( (mbedtls_ccm_context *)ctx );
+    mbedtls_ccm_free( ctx );
     mbedtls_free( ctx );
 }
 #endif /* MBEDTLS_CCM_C */
@@ -176,7 +176,7 @@ static int aes_crypt_xts_wrap( void *ctx, mbedtls_operation_t operation,
                                const unsigned char *input,
                                unsigned char *output )
 {
-    mbedtls_aes_xts_context *xts_ctx = (mbedtls_aes_xts_context *)ctx;
+    mbedtls_aes_xts_context *xts_ctx = ctx;
     int mode;
 
     switch( operation )
@@ -430,20 +430,20 @@ static const mbedtls_cipher_info_t aes_256_ctr_info = {
 static int xts_aes_setkey_enc_wrap( void *ctx, const unsigned char *key,
                                     unsigned int key_bitlen )
 {
-    mbedtls_aes_xts_context *xts_ctx = (mbedtls_aes_xts_context *)ctx;
+    mbedtls_aes_xts_context *xts_ctx = ctx;
     return( mbedtls_aes_xts_setkey_enc( xts_ctx, key, key_bitlen ) );
 }
 
 static int xts_aes_setkey_dec_wrap( void *ctx, const unsigned char *key,
                                     unsigned int key_bitlen )
 {
-    mbedtls_aes_xts_context *xts_ctx = (mbedtls_aes_xts_context *)ctx;
+    mbedtls_aes_xts_context *xts_ctx = ctx;
     return( mbedtls_aes_xts_setkey_dec( xts_ctx, key, key_bitlen ) );
 }
 
 static void *xts_aes_ctx_alloc( void )
 {
-    mbedtls_aes_xts_context *xts_ctx = (mbedtls_aes_xts_context *)mbedtls_calloc( 1, sizeof( *xts_ctx ) );
+    mbedtls_aes_xts_context *xts_ctx = mbedtls_calloc( 1, sizeof( *xts_ctx ) );
 
     if( xts_ctx != NULL )
         mbedtls_aes_xts_init( xts_ctx );
@@ -453,7 +453,7 @@ static void *xts_aes_ctx_alloc( void )
 
 static void xts_aes_ctx_free( void *ctx )
 {
-    mbedtls_aes_xts_context *xts_ctx = (mbedtls_aes_xts_context *)ctx;
+    mbedtls_aes_xts_context *xts_ctx = ctx;
 
     if( xts_ctx == NULL )
         return;
@@ -1914,7 +1914,7 @@ static int chacha20_stream_wrap( void *ctx,  size_t length,
 {
     int ret;
 
-    ret = mbedtls_chacha20_update( (mbedtls_chacha20_context *)ctx, length, input, output );
+    ret = mbedtls_chacha20_update( ctx, length, input, output );
     if( ret == MBEDTLS_ERR_CHACHA20_BAD_INPUT_DATA )
         return( MBEDTLS_ERR_CIPHER_BAD_INPUT_DATA );
 
@@ -1924,7 +1924,7 @@ static int chacha20_stream_wrap( void *ctx,  size_t length,
 static void * chacha20_ctx_alloc( void )
 {
     mbedtls_chacha20_context *ctx;
-    ctx = (mbedtls_chacha20_context *)mbedtls_calloc( 1, sizeof( mbedtls_chacha20_context ) );
+    ctx = mbedtls_calloc( 1, sizeof( mbedtls_chacha20_context ) );
 
     if( ctx == NULL )
         return( NULL );
@@ -1996,7 +1996,7 @@ static int chachapoly_setkey_wrap( void *ctx,
 static void * chachapoly_ctx_alloc( void )
 {
     mbedtls_chachapoly_context *ctx;
-    ctx = (mbedtls_chachapoly_context *)mbedtls_calloc( 1, sizeof( mbedtls_chachapoly_context ) );
+    ctx = mbedtls_calloc( 1, sizeof( mbedtls_chachapoly_context ) );
 
     if( ctx == NULL )
         return( NULL );
