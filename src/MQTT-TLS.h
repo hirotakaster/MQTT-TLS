@@ -201,6 +201,8 @@ public:
     bool loop();
     bool isConnected();
 
+    void setMaxPacketSize(int maxpacketsize);
+
     /* TLS */
     bool enableVerify = true;
     int enableTls(const char *rootCaPem, const size_t rootCaPemSize);

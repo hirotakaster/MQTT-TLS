@@ -576,6 +576,13 @@ bool MQTT::isConnected() {
     return rc;
 }
 
+void MQTT::setMaxPacketSize(int maxpacketsize) {
+    this->maxpacketsize = maxpacketsize;
+    if (buffer != NULL)
+      delete[] buffer;
+    buffer = new uint8_t[this->maxpacketsize];
+}
+
 bool MQTT::available() {
     return tcpClient.available();
 }
