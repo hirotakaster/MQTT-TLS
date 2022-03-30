@@ -11,6 +11,14 @@
 #define DUP_FLAG_OFF_MASK           (0<<3)
 #define DUP_FLAG_ON_MASK            (1<<3)
 
+extern "C" int _gettimeofday( struct timeval *tv, void *tzvp )
+{
+    uint32_t t = HAL_Timer_Milliseconds();  // get uptime
+    tv->tv_sec = HAL_RTC_Get_UnixTime();    // get rtc time before Particle.syncTime()
+    tv->tv_usec = ( t % 1000 )*1000;        // get remaining microseconds
+    return 0;
+} // end _gettimeofday()
+
 MQTT::MQTT() {
     this->ip = NULL;
 }

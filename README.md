@@ -1,7 +1,16 @@
 # MQTT-TLS for Photon, Spark Core
-<a href="http://mqtt.org/" target=_blank>MQTT</a> publish/subscribe TLS library for Photon, Spark Core. This library based <a href="https://github.com/hirotakaster/MQTT">MQTT for Photon, Spark Core</a> and mbedTLS 2.16.3.
+<a href="http://mqtt.org/" target=_blank>MQTT</a> publish/subscribe TLS library for Photon, Spark Core. This library based <a href="https://github.com/hirotakaster/MQTT">MQTT for Photon, Spark Core</a> and mbedTLS 2.28.0/2.16.3.
 
-## Chiper List
+
+## Requirement
+* Argon, Boron firmware version over 3.2.0 could use the MQTT-TLS 0.2.24(mbedTLS 2.28.0).
+* Other Platform target is MQTT-TLS 0.2.23(mbedTLS 2.16.3).
+
+## Chiper List(default settings)
+mbedTLS 2.28.0
+* ECDHE|DHE, RSA|ECDSA, CHACHA20_POLY_1305|AES[128|256], GCM,CCM[|_8],CBC,SHA[|256|384],
+
+mbedTLS 2.16.3
 * TLS_RSA_WITH_AES_[128|256]_GCM_SHA[1|256|512]
 * TLS_ECDHE_ECDSA_WITH_AES_[128|256]_GCM_SHA[385|256]
 * TLS_EMPTY_RENOGOTIATION_INFO_SCSV
@@ -149,4 +158,5 @@ config-mini.h
 |text|data|bss|de|hex|filename|
 ----|----|----|----|----|----
 |66868|148|11736|78752|133a0|a1-example.elf|
+
 
