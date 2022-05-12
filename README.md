@@ -1,5 +1,5 @@
 # MQTT-TLS for Photon, Spark Core
-<a href="http://mqtt.org/" target=_blank>MQTT</a> publish/subscribe TLS library for Photon, Spark Core. This library based <a href="https://github.com/hirotakaster/MQTT">MQTT for Photon, Spark Core</a> and mbedTLS 2.31/2.28.0/2.16.3.
+<a href="http://mqtt.org/" target=_blank>MQTT</a> publish/subscribe TLS library for Photon, Spark Core. This library based <a href="https://github.com/hirotakaster/MQTT">MQTT for Photon, Spark Core</a> and mbedTLS 3.1.0/2.28.0/2.16.3.
 
 
 ## Requirement
@@ -7,7 +7,7 @@
 * Other Platform target is MQTT-TLS 0.2.23(mbedTLS 2.16.3).
 
 ## Chiper List(default settings)
-mbedTLS 2.28.0, 2.31.0
+mbedTLS 2.28.0, 3.1.0
 * ECDHE|DHE, RSA|ECDSA, CHACHA20_POLY_1305|AES[128|256], GCM,CCM[|_8],CBC,SHA[|256|384],
 
 mbedTLS 2.16.3
