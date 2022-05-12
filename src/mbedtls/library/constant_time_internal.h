@@ -27,7 +27,7 @@
 #endif
 
 #if defined(MBEDTLS_SSL_TLS_C)
-#include "mbedtls/include/mbedtls/ssl_internal.h"
+#include "ssl_misc.h"
 #endif
 
 #include <stddef.h>
@@ -298,8 +298,6 @@ int mbedtls_ct_hmac( mbedtls_md_context_t *ctx,
  *       is often a situation that an attacker can provoke and leaking which
  *       one is the result is precisely the information the attacker wants.
  *
- * \param mode           The mode of operation. This must be either
- *                       #MBEDTLS_RSA_PRIVATE or #MBEDTLS_RSA_PUBLIC (deprecated).
  * \param input          The input buffer which is the payload inside PKCS#1v1.5
  *                       encryption padding, called the "encoded message EM"
  *                       by the terminology.
@@ -317,8 +315,7 @@ int mbedtls_ct_hmac( mbedtls_md_context_t *ctx,
  * \return      #MBEDTLS_ERR_RSA_INVALID_PADDING
  *              The input doesn't contain properly formatted padding.
  */
-int mbedtls_ct_rsaes_pkcs1_v15_unpadding( int mode,
-                                          unsigned char *input,
+int mbedtls_ct_rsaes_pkcs1_v15_unpadding( unsigned char *input,
                                           size_t ilen,
                                           unsigned char *output,
                                           size_t output_max_len,

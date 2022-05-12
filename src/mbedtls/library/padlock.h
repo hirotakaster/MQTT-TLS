@@ -26,16 +26,11 @@
 #ifndef MBEDTLS_PADLOCK_H
 #define MBEDTLS_PADLOCK_H
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/include/mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/include/mbedtls/build_info.h"
 
 #include "mbedtls/include/mbedtls/aes.h"
 
-/** Input data should be aligned. */
-#define MBEDTLS_ERR_PADLOCK_DATA_MISALIGNED               -0x0030
+#define MBEDTLS_ERR_PADLOCK_DATA_MISALIGNED               -0x0030  /**< Input data should be aligned. */
 
 #if defined(__has_feature)
 #if __has_feature(address_sanitizer)

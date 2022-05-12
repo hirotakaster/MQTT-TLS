@@ -1,5 +1,5 @@
 /**
- * \file rsa_internal.h
+ * \file rsa_alt_helpers.h
  *
  * \brief Context-independent RSA helper functions
  *
@@ -55,11 +55,7 @@
 #ifndef MBEDTLS_RSA_INTERNAL_H
 #define MBEDTLS_RSA_INTERNAL_H
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/include/mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/include/mbedtls/build_info.h"
 
 #include "mbedtls/include/mbedtls/bignum.h"
 
@@ -221,4 +217,4 @@ int mbedtls_rsa_validate_crt( const mbedtls_mpi *P,  const mbedtls_mpi *Q,
 }
 #endif
 
-#endif /* rsa_internal.h */
+#endif /* rsa_alt_helpers.h */

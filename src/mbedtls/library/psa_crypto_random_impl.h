@@ -35,7 +35,7 @@
 #if defined(MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG)
 
 #include <string.h>
-#include <mbedtls/entropy.h> // only for error codes
+#include "mbedtls/include/mbedtls/entropy.h" // only for error codes
 #include "mbedtls/include/psa/crypto.h"
 
 typedef mbedtls_psa_external_random_context_t mbedtls_psa_random_context_t;

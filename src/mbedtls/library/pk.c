@@ -21,7 +21,7 @@
 
 #if defined(MBEDTLS_PK_C)
 #include "mbedtls/include/mbedtls/pk.h"
-#include "mbedtls/include/mbedtls/pk_internal.h"
+#include "pk_wrap.h"
 
 #include "mbedtls/include/mbedtls/platform_util.h"
 #include "mbedtls/include/mbedtls/error.h"
@@ -235,14 +235,11 @@ static inline int pk_hashlen_helper( mbedtls_md_type_t md_alg, size_t *hash_len 
 {
     const mbedtls_md_info_t *md_info;
 
-    if( *hash_len != 0 && md_alg == MBEDTLS_MD_NONE )
+    if( *hash_len != 0 )
         return( 0 );
 
     if( ( md_info = mbedtls_md_info_from_type( md_alg ) ) == NULL )
         return( -1 );
-
-    if ( *hash_len != 0 && *hash_len != mbedtls_md_get_size( md_info ) )
-        return ( -1 );
 
     *hash_len = mbedtls_md_get_size( md_info );
     return( 0 );
@@ -370,11 +367,10 @@ int mbedtls_pk_verify_ext( mbedtls_pk_type_t type, const void *options,
             return( MBEDTLS_ERR_RSA_VERIFY_FAILED );
 
         ret = mbedtls_rsa_rsassa_pss_verify_ext( mbedtls_pk_rsa( *ctx ),
-                NULL, NULL, MBEDTLS_RSA_PUBLIC,
-                md_alg, (unsigned int) hash_len, hash,
-                pss_opts->mgf1_hash_id,
-                pss_opts->expected_salt_len,
-                sig );
+                                                 md_alg, (unsigned int) hash_len, hash,
+                                                 pss_opts->mgf1_hash_id,
+                                                 pss_opts->expected_salt_len,
+                                                 sig );
         if( ret != 0 )
             return( ret );
 
@@ -400,7 +396,7 @@ int mbedtls_pk_verify_ext( mbedtls_pk_type_t type, const void *options,
 int mbedtls_pk_sign_restartable( mbedtls_pk_context *ctx,
              mbedtls_md_type_t md_alg,
              const unsigned char *hash, size_t hash_len,
-             unsigned char *sig, size_t *sig_len,
+             unsigned char *sig, size_t sig_size, size_t *sig_len,
              int (*f_rng)(void *, unsigned char *, size_t), void *p_rng,
              mbedtls_pk_restart_ctx *rs_ctx )
 {
@@ -425,7 +421,9 @@ int mbedtls_pk_sign_restartable( mbedtls_pk_context *ctx,
             return( ret );
 
         ret = ctx->pk_info->sign_rs_func( ctx->pk_ctx, md_alg,
-                hash, hash_len, sig, sig_len, f_rng, p_rng, rs_ctx->rs_ctx );
+                                          hash, hash_len,
+                                          sig, sig_size, sig_len,
+                                          f_rng, p_rng, rs_ctx->rs_ctx );
 
         if( ret != MBEDTLS_ERR_ECP_IN_PROGRESS )
             mbedtls_pk_restart_free( rs_ctx );
@@ -439,8 +437,10 @@ int mbedtls_pk_sign_restartable( mbedtls_pk_context *ctx,
     if( ctx->pk_info->sign_func == NULL )
         return( MBEDTLS_ERR_PK_TYPE_MISMATCH );
 
-    return( ctx->pk_info->sign_func( ctx->pk_ctx, md_alg, hash, hash_len,
-                                     sig, sig_len, f_rng, p_rng ) );
+    return( ctx->pk_info->sign_func( ctx->pk_ctx, md_alg,
+                                     hash, hash_len,
+                                     sig, sig_size, sig_len,
+                                     f_rng, p_rng ) );
 }
 
 /*
@@ -448,11 +448,12 @@ int mbedtls_pk_sign_restartable( mbedtls_pk_context *ctx,
  */
 int mbedtls_pk_sign( mbedtls_pk_context *ctx, mbedtls_md_type_t md_alg,
              const unsigned char *hash, size_t hash_len,
-             unsigned char *sig, size_t *sig_len,
+             unsigned char *sig, size_t sig_size, size_t *sig_len,
              int (*f_rng)(void *, unsigned char *, size_t), void *p_rng )
 {
     return( mbedtls_pk_sign_restartable( ctx, md_alg, hash, hash_len,
-                                         sig, sig_len, f_rng, p_rng, NULL ) );
+                                         sig, sig_size, sig_len,
+                                         f_rng, p_rng, NULL ) );
 }
 
 /*
@@ -504,7 +505,10 @@ int mbedtls_pk_encrypt( mbedtls_pk_context *ctx,
 /*
  * Check public-private key pair
  */
-int mbedtls_pk_check_pair( const mbedtls_pk_context *pub, const mbedtls_pk_context *prv )
+int mbedtls_pk_check_pair( const mbedtls_pk_context *pub,
+                           const mbedtls_pk_context *prv,
+                           int (*f_rng)(void *, unsigned char *, size_t),
+                           void *p_rng )
 {
     PK_VALIDATE_RET( pub != NULL );
     PK_VALIDATE_RET( prv != NULL );
@@ -514,6 +518,9 @@ int mbedtls_pk_check_pair( const mbedtls_pk_context *pub, const mbedtls_pk_conte
     {
         return( MBEDTLS_ERR_PK_BAD_INPUT_DATA );
     }
+
+    if( f_rng == NULL )
+        return( MBEDTLS_ERR_PK_BAD_INPUT_DATA );
 
     if( prv->pk_info->check_pair_func == NULL )
         return( MBEDTLS_ERR_PK_FEATURE_UNAVAILABLE );
@@ -529,7 +536,7 @@ int mbedtls_pk_check_pair( const mbedtls_pk_context *pub, const mbedtls_pk_conte
             return( MBEDTLS_ERR_PK_TYPE_MISMATCH );
     }
 
-    return( prv->pk_info->check_pair_func( pub->pk_ctx, prv->pk_ctx ) );
+    return( prv->pk_info->check_pair_func( pub->pk_ctx, prv->pk_ctx, f_rng, p_rng ) );
 }
 
 /*
@@ -629,7 +636,7 @@ int mbedtls_pk_wrap_as_opaque( mbedtls_pk_context *pk,
 
     /* import private key into PSA */
     if( PSA_SUCCESS != psa_import_key( &attributes, d, d_len, key ) )
-        return( MBEDTLS_ERR_PK_HW_ACCEL_FAILED );
+        return( MBEDTLS_ERR_PLATFORM_HW_ACCEL_FAILED );
 
     /* make PK context wrap the key slot */
     mbedtls_pk_free( pk );

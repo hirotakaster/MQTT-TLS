@@ -3,11 +3,11 @@
  * \brief PSA crypto configuration options (set of defines)
  *
  *  This set of compile-time options takes settings defined in
- *  include/mbedtls/config.h and include/psa/crypto_config.h and uses
+ *  include/mbedtls/mbedtls_config.h and include/psa/crypto_config.h and uses
  *  those definitions to define symbols used in the library code.
  *
  *  Users and integrators should not edit this file, please edit
- *  include/mbedtls/config.h for MBETLS_XXX settings or
+ *  include/mbedtls/mbedtls_config.h for MBETLS_XXX settings or
  *  include/psa/crypto_config.h for PSA_WANT_XXX settings.
  */
 /*
@@ -113,16 +113,6 @@ extern "C" {
 #endif /* !MBEDTLS_PSA_ACCEL_ALG_HMAC */
 #endif /* PSA_WANT_ALG_HMAC */
 
-#if defined(PSA_WANT_ALG_MD2) && !defined(MBEDTLS_PSA_ACCEL_ALG_MD2)
-#define MBEDTLS_PSA_BUILTIN_ALG_MD2 1
-#define MBEDTLS_MD2_C
-#endif
-
-#if defined(PSA_WANT_ALG_MD4) && !defined(MBEDTLS_PSA_ACCEL_ALG_MD4)
-#define MBEDTLS_PSA_BUILTIN_ALG_MD4 1
-#define MBEDTLS_MD4_C
-#endif
-
 #if defined(PSA_WANT_ALG_MD5) && !defined(MBEDTLS_PSA_ACCEL_ALG_MD5)
 #define MBEDTLS_PSA_BUILTIN_ALG_MD5 1
 #define MBEDTLS_MD5_C
@@ -183,7 +173,7 @@ extern "C" {
 
 #if defined(PSA_WANT_ALG_SHA_224) && !defined(MBEDTLS_PSA_ACCEL_ALG_SHA_224)
 #define MBEDTLS_PSA_BUILTIN_ALG_SHA_224 1
-#define MBEDTLS_SHA256_C
+#define MBEDTLS_SHA224_C
 #endif
 
 #if defined(PSA_WANT_ALG_SHA_256) && !defined(MBEDTLS_PSA_ACCEL_ALG_SHA_256)
@@ -193,7 +183,7 @@ extern "C" {
 
 #if defined(PSA_WANT_ALG_SHA_384) && !defined(MBEDTLS_PSA_ACCEL_ALG_SHA_384)
 #define MBEDTLS_PSA_BUILTIN_ALG_SHA_384 1
-#define MBEDTLS_SHA512_C
+#define MBEDTLS_SHA384_C
 #endif
 
 #if defined(PSA_WANT_ALG_SHA_512) && !defined(MBEDTLS_PSA_ACCEL_ALG_SHA_512)
@@ -290,13 +280,6 @@ extern "C" {
 #define MBEDTLS_AES_C
 #endif /* PSA_HAVE_SOFT_KEY_TYPE_AES || PSA_HAVE_SOFT_BLOCK_MODE */
 #endif /* PSA_WANT_KEY_TYPE_AES */
-
-#if defined(PSA_WANT_KEY_TYPE_ARC4)
-#if !defined(MBEDTLS_PSA_ACCEL_KEY_TYPE_ARC4)
-#define MBEDTLS_PSA_BUILTIN_KEY_TYPE_ARC4 1
-#define MBEDTLS_ARC4_C
-#endif /*!MBEDTLS_PSA_ACCEL_KEY_TYPE_ARC4 */
-#endif /* PSA_WANT_KEY_TYPE_ARC4 */
 
 #if defined(PSA_WANT_KEY_TYPE_ARIA)
 #if !defined(MBEDTLS_PSA_ACCEL_KEY_TYPE_ARIA)
@@ -481,11 +464,6 @@ extern "C" {
 
 #if defined(PSA_WANT_ECC_MONTGOMERY_448)
 #if !defined(MBEDTLS_PSA_ACCEL_ECC_MONTGOMERY_448)
-/*
- * Curve448 is not yet supported via the PSA API in Mbed TLS
- * (https://github.com/ARMmbed/mbedtls/issues/4249).
- */
-#error "Curve448 is not yet supported via the PSA API in Mbed TLS."
 #define MBEDTLS_ECP_DP_CURVE448_ENABLED
 #define MBEDTLS_PSA_BUILTIN_ECC_MONTGOMERY_448 1
 #endif /* !MBEDTLS_PSA_ACCEL_ECC_MONTGOMERY_448 */
@@ -622,16 +600,6 @@ extern "C" {
 #define PSA_WANT_ALG_TLS12_PSK_TO_MS 1
 #endif /* MBEDTLS_MD_C */
 
-#if defined(MBEDTLS_MD2_C)
-#define MBEDTLS_PSA_BUILTIN_ALG_MD2 1
-#define PSA_WANT_ALG_MD2 1
-#endif
-
-#if defined(MBEDTLS_MD4_C)
-#define MBEDTLS_PSA_BUILTIN_ALG_MD4 1
-#define PSA_WANT_ALG_MD4 1
-#endif
-
 #if defined(MBEDTLS_MD5_C)
 #define MBEDTLS_PSA_BUILTIN_ALG_MD5 1
 #define PSA_WANT_ALG_MD5 1
@@ -667,18 +635,22 @@ extern "C" {
 #define PSA_WANT_ALG_SHA_1 1
 #endif
 
-#if defined(MBEDTLS_SHA256_C)
+#if defined(MBEDTLS_SHA224_C)
 #define MBEDTLS_PSA_BUILTIN_ALG_SHA_224 1
-#define MBEDTLS_PSA_BUILTIN_ALG_SHA_256 1
 #define PSA_WANT_ALG_SHA_224 1
+#endif
+
+#if defined(MBEDTLS_SHA256_C)
+#define MBEDTLS_PSA_BUILTIN_ALG_SHA_256 1
 #define PSA_WANT_ALG_SHA_256 1
 #endif
 
-#if defined(MBEDTLS_SHA512_C)
-#if !defined(MBEDTLS_SHA512_NO_SHA384)
+#if defined(MBEDTLS_SHA384_C)
 #define MBEDTLS_PSA_BUILTIN_ALG_SHA_384 1
 #define PSA_WANT_ALG_SHA_384 1
 #endif
+
+#if defined(MBEDTLS_SHA512_C)
 #define MBEDTLS_PSA_BUILTIN_ALG_SHA_512 1
 #define PSA_WANT_ALG_SHA_512 1
 #endif
@@ -686,13 +658,6 @@ extern "C" {
 #if defined(MBEDTLS_AES_C)
 #define PSA_WANT_KEY_TYPE_AES 1
 #define MBEDTLS_PSA_BUILTIN_KEY_TYPE_AES 1
-#endif
-
-#if defined(MBEDTLS_ARC4_C)
-#define PSA_WANT_KEY_TYPE_ARC4 1
-#define PSA_WANT_ALG_STREAM_CIPHER 1
-#define MBEDTLS_PSA_BUILTIN_KEY_TYPE_ARC4 1
-#define MBEDTLS_PSA_BUILTIN_ALG_STREAM_CIPHER 1
 #endif
 
 #if defined(MBEDTLS_ARIA_C)
@@ -776,8 +741,7 @@ extern "C" {
 #define PSA_WANT_ECC_MONTGOMERY_255
 #endif
 
-/* Curve448 is not yet supported via the PSA API (https://github.com/ARMmbed/mbedtls/issues/4249) */
-#if 0 && defined(MBEDTLS_ECP_DP_CURVE448_ENABLED)
+#if defined(MBEDTLS_ECP_DP_CURVE448_ENABLED)
 #define MBEDTLS_PSA_BUILTIN_ECC_MONTGOMERY_448 1
 #define PSA_WANT_ECC_MONTGOMERY_448
 #endif
