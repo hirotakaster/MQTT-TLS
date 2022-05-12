@@ -3,7 +3,7 @@
 
 
 ## Requirement
-* Argon, Boron firmware version over 3.1.0 and later could use the MQTT-TLS 0.2.24, 2.31.0.
+* Argon, Boron firmware version over 3.1.0 and later could use the MQTT-TLS 0.2.24, 0.2.25.
 * Other Platform target is MQTT-TLS 0.2.23(mbedTLS 2.16.3).
 
 ## Chiper List(default settings)
