@@ -33,7 +33,7 @@
 #endif
 
 #if defined(MBEDTLS_SSL_TLS_C)
-#include "mbedtls/include/mbedtls/ssl_internal.h"
+#include "ssl_misc.h"
 #endif
 
 #if defined(MBEDTLS_RSA_C)
@@ -461,7 +461,7 @@ int mbedtls_ct_hmac( mbedtls_md_context_t *ctx,
      * Then we only need to compute HASH(okey + inner_hash) and we're done.
      */
     const mbedtls_md_type_t md_alg = mbedtls_md_get_type( ctx->md_info );
-    /* TLS 1.0-1.2 only support SHA-384, SHA-256, SHA-1, MD-5,
+    /* TLS 1.2 only supports SHA-384, SHA-256, SHA-1, MD-5,
      * all of which have the same block size except SHA-384. */
     const size_t block_size = md_alg == MBEDTLS_MD_SHA384 ? 128 : 64;
     const unsigned char * const ikey = ctx->hmac_ctx;
@@ -672,8 +672,7 @@ int mbedtls_mpi_lt_mpi_ct( const mbedtls_mpi *X,
 
 #if defined(MBEDTLS_PKCS1_V15) && defined(MBEDTLS_RSA_C) && !defined(MBEDTLS_RSA_ALT)
 
-int mbedtls_ct_rsaes_pkcs1_v15_unpadding( int mode,
-                                          unsigned char *input,
+int mbedtls_ct_rsaes_pkcs1_v15_unpadding( unsigned char *input,
                                           size_t ilen,
                                           unsigned char *output,
                                           size_t output_max_len,
@@ -705,36 +704,19 @@ int mbedtls_ct_rsaes_pkcs1_v15_unpadding( int mode,
      * memory trace. The first byte must be 0. */
     bad |= input[0];
 
-    if( mode == MBEDTLS_RSA_PRIVATE )
-    {
-        /* Decode EME-PKCS1-v1_5 padding: 0x00 || 0x02 || PS || 0x00
-         * where PS must be at least 8 nonzero bytes. */
-        bad |= input[1] ^ MBEDTLS_RSA_CRYPT;
 
-        /* Read the whole buffer. Set pad_done to nonzero if we find
-         * the 0x00 byte and remember the padding length in pad_count. */
-        for( i = 2; i < ilen; i++ )
-        {
-            pad_done  |= ((input[i] | (unsigned char)-input[i]) >> 7) ^ 1;
-            pad_count += ((pad_done | (unsigned char)-pad_done) >> 7) ^ 1;
-        }
-    }
-    else
-    {
-        /* Decode EMSA-PKCS1-v1_5 padding: 0x00 || 0x01 || PS || 0x00
-         * where PS must be at least 8 bytes with the value 0xFF. */
-        bad |= input[1] ^ MBEDTLS_RSA_SIGN;
+    /* Decode EME-PKCS1-v1_5 padding: 0x00 || 0x02 || PS || 0x00
+     * where PS must be at least 8 nonzero bytes. */
+    bad |= input[1] ^ MBEDTLS_RSA_CRYPT;
 
-        /* Read the whole buffer. Set pad_done to nonzero if we find
-         * the 0x00 byte and remember the padding length in pad_count.
-         * If there's a non-0xff byte in the padding, the padding is bad. */
-        for( i = 2; i < ilen; i++ )
-        {
-            pad_done |= mbedtls_ct_uint_if( input[i], 0, 1 );
-            pad_count += mbedtls_ct_uint_if( pad_done, 0, 1 );
-            bad |= mbedtls_ct_uint_if( pad_done, 0, input[i] ^ 0xFF );
-        }
+    /* Read the whole buffer. Set pad_done to nonzero if we find
+     * the 0x00 byte and remember the padding length in pad_count. */
+    for( i = 2; i < ilen; i++ )
+    {
+        pad_done  |= ((input[i] | (unsigned char)-input[i]) >> 7) ^ 1;
+        pad_count += ((pad_done | (unsigned char)-pad_done) >> 7) ^ 1;
     }
+
 
     /* If pad_done is still zero, there's no data, only unfinished padding. */
     bad |= mbedtls_ct_uint_if( pad_done, 0, 1 );

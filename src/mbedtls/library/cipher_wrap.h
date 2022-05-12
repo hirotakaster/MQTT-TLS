@@ -1,5 +1,5 @@
 /**
- * \file cipher_internal.h
+ * \file cipher_wrap.h
  *
  * \brief Cipher wrappers.
  *
@@ -24,11 +24,7 @@
 #ifndef MBEDTLS_CIPHER_WRAP_H
 #define MBEDTLS_CIPHER_WRAP_H
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/include/mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/include/mbedtls/build_info.h"
 
 #include "mbedtls/include/mbedtls/cipher.h"
 

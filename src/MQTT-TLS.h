@@ -58,14 +58,17 @@ sample code bearing this copyright.
 
 #include "mbedtls/include/mbedtls/check_config.h"
 
-#include "mbedtls/include/mbedtls/net.h"
+#include "mbedtls/library/common.h"
+#include "mbedtls/library/ssl_misc.h"
+
+#include "mbedtls/include/mbedtls/net_sockets.h"
 #include "mbedtls/include/mbedtls/debug.h"
 #include "mbedtls/include/mbedtls/ssl.h"
 #include "mbedtls/include/mbedtls/entropy.h"
 #include "mbedtls/include/mbedtls/ctr_drbg.h"
 #include "mbedtls/include/mbedtls/error.h"
 #include "mbedtls/include/mbedtls/timing.h"
-#include "mbedtls/include/mbedtls/ssl_internal.h"
+
 #include "timer_hal.h"
 #include "rtc_hal.h"
 

@@ -74,7 +74,11 @@
 #if !defined(_WIN32) || defined(EFIX64) || defined(EFI32)
 #include <sys/types.h>
 #include <sys/stat.h>
+#if defined(__MBED__)
+#include <platform/mbed_retarget.h>
+#else
 #include <dirent.h>
+#endif /* __MBED__ */
 #endif /* !_WIN32 || EFIX64 || EFI32 */
 #endif
 
@@ -95,28 +99,39 @@ typedef struct {
  * concerns. */
 const mbedtls_x509_crt_profile mbedtls_x509_crt_profile_default =
 {
-    /* Only SHA-2 hashes */
-    MBEDTLS_X509_ID_FLAG( MBEDTLS_MD_SHA224 ) |
-    MBEDTLS_X509_ID_FLAG( MBEDTLS_MD_SHA256 ) |
-    MBEDTLS_X509_ID_FLAG( MBEDTLS_MD_SHA384 ) |
-    MBEDTLS_X509_ID_FLAG( MBEDTLS_MD_SHA512 ),
-    0xFFFFFFF, /* Any PK alg    */
-    0xFFFFFFF, /* Any curve     */
-    2048,
-};
-
-/*
- * Next-default profile
- */
-const mbedtls_x509_crt_profile mbedtls_x509_crt_profile_next =
-{
-    /* Hashes from SHA-256 and above */
+    /* Hashes from SHA-256 and above. Note that this selection
+     * should be aligned with ssl_preset_default_hashes in ssl_tls.c. */
     MBEDTLS_X509_ID_FLAG( MBEDTLS_MD_SHA256 ) |
     MBEDTLS_X509_ID_FLAG( MBEDTLS_MD_SHA384 ) |
     MBEDTLS_X509_ID_FLAG( MBEDTLS_MD_SHA512 ),
     0xFFFFFFF, /* Any PK alg    */
 #if defined(MBEDTLS_ECP_C)
-    /* Curves at or above 128-bit security level */
+    /* Curves at or above 128-bit security level. Note that this selection
+     * should be aligned with ssl_preset_default_curves in ssl_tls.c. */
+    MBEDTLS_X509_ID_FLAG( MBEDTLS_ECP_DP_SECP256R1 ) |
+    MBEDTLS_X509_ID_FLAG( MBEDTLS_ECP_DP_SECP384R1 ) |
+    MBEDTLS_X509_ID_FLAG( MBEDTLS_ECP_DP_SECP521R1 ) |
+    MBEDTLS_X509_ID_FLAG( MBEDTLS_ECP_DP_BP256R1 ) |
+    MBEDTLS_X509_ID_FLAG( MBEDTLS_ECP_DP_BP384R1 ) |
+    MBEDTLS_X509_ID_FLAG( MBEDTLS_ECP_DP_BP512R1 ) |
+    0,
+#else
+    0,
+#endif
+    2048,
+};
+
+/* Next-generation profile. Currently identical to the default, but may
+ * be tightened at any time. */
+const mbedtls_x509_crt_profile mbedtls_x509_crt_profile_next =
+{
+    /* Hashes from SHA-256 and above. */
+    MBEDTLS_X509_ID_FLAG( MBEDTLS_MD_SHA256 ) |
+    MBEDTLS_X509_ID_FLAG( MBEDTLS_MD_SHA384 ) |
+    MBEDTLS_X509_ID_FLAG( MBEDTLS_MD_SHA512 ),
+    0xFFFFFFF, /* Any PK alg    */
+#if defined(MBEDTLS_ECP_C)
+    /* Curves at or above 128-bit security level. */
     MBEDTLS_X509_ID_FLAG( MBEDTLS_ECP_DP_SECP256R1 ) |
     MBEDTLS_X509_ID_FLAG( MBEDTLS_ECP_DP_SECP384R1 ) |
     MBEDTLS_X509_ID_FLAG( MBEDTLS_ECP_DP_SECP521R1 ) |
@@ -149,6 +164,17 @@ const mbedtls_x509_crt_profile mbedtls_x509_crt_profile_suiteb =
     0,
 #endif
     0,
+};
+
+/*
+ * Empty / all-forbidden profile
+ */
+const mbedtls_x509_crt_profile mbedtls_x509_crt_profile_none =
+{
+    0,
+    0,
+    0,
+    (uint32_t) -1,
 };
 
 /*
@@ -813,8 +839,7 @@ static int x509_get_certificate_policies( unsigned char **p,
         {
             /*
              * Set the parsing return code but continue parsing, in case this
-             * extension is critical and MBEDTLS_X509_ALLOW_UNSUPPORTED_CRITICAL_EXTENSION
-             * is configured.
+             * extension is critical.
              */
             parse_ret = MBEDTLS_ERR_X509_FEATURE_UNAVAILABLE;
         }
@@ -956,14 +981,12 @@ static int x509_get_crt_ext( unsigned char **p,
             /* No parser found, skip extension */
             *p = end_ext_octet;
 
-#if !defined(MBEDTLS_X509_ALLOW_UNSUPPORTED_CRITICAL_EXTENSION)
             if( is_critical )
             {
                 /* Data is marked as critical: fail */
                 return( MBEDTLS_ERROR_ADD( MBEDTLS_ERR_X509_INVALID_EXTENSIONS,
                         MBEDTLS_ERR_ASN1_UNEXPECTED_TAG ) );
             }
-#endif
             continue;
         }
 
@@ -1022,11 +1045,9 @@ static int x509_get_crt_ext( unsigned char **p,
                         start_ext_octet, end_ext_octet ) == 0 )
                     break;
 
-#if !defined(MBEDTLS_X509_ALLOW_UNSUPPORTED_CRITICAL_EXTENSION)
                 if( is_critical )
                     return( ret );
                 else
-#endif
                 /*
                  * If MBEDTLS_ERR_X509_FEATURE_UNAVAILABLE is returned, then we
                  * cannot interpret or enforce the policy. However, it is up to
@@ -1044,11 +1065,9 @@ static int x509_get_crt_ext( unsigned char **p,
              * supports, but there isn't an x509 parser for it,
              * skip the extension.
              */
-#if !defined(MBEDTLS_X509_ALLOW_UNSUPPORTED_CRITICAL_EXTENSION)
             if( is_critical )
                 return( MBEDTLS_ERR_X509_FEATURE_UNAVAILABLE );
             else
-#endif
                 *p = end_ext_octet;
         }
     }
@@ -1263,9 +1282,7 @@ static int x509_crt_parse_der_core( mbedtls_x509_crt *crt,
         }
     }
 
-#if !defined(MBEDTLS_X509_ALLOW_EXTENSIONS_NON_V3)
     if( crt->version == 3 )
-#endif
     {
         ret = x509_get_crt_ext( &p, end, crt, cb, p_ctx );
         if( ret != 0 )
@@ -1762,6 +1779,57 @@ static int x509_get_other_name( const mbedtls_x509_buf *subject_alt_name,
     return( 0 );
 }
 
+int mbedtls_x509_parse_subject_alt_name( const mbedtls_x509_buf *san_buf,
+                                         mbedtls_x509_subject_alternative_name *san )
+{
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+    switch( san_buf->tag &
+            ( MBEDTLS_ASN1_TAG_CLASS_MASK |
+              MBEDTLS_ASN1_TAG_VALUE_MASK ) )
+    {
+        /*
+         * otherName
+         */
+        case( MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_X509_SAN_OTHER_NAME ):
+        {
+            mbedtls_x509_san_other_name other_name;
+
+            ret = x509_get_other_name( san_buf, &other_name );
+            if( ret != 0 )
+                return( ret );
+
+            memset( san, 0, sizeof( mbedtls_x509_subject_alternative_name ) );
+            san->type = MBEDTLS_X509_SAN_OTHER_NAME;
+            memcpy( &san->san.other_name,
+                    &other_name, sizeof( other_name ) );
+
+        }
+        break;
+
+        /*
+         * dNSName
+         */
+        case( MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_X509_SAN_DNS_NAME ):
+        {
+            memset( san, 0, sizeof( mbedtls_x509_subject_alternative_name ) );
+            san->type = MBEDTLS_X509_SAN_DNS_NAME;
+
+            memcpy( &san->san.unstructured_name,
+                    san_buf, sizeof( *san_buf ) );
+
+        }
+        break;
+
+        /*
+         * Type not supported
+         */
+        default:
+            return( MBEDTLS_ERR_X509_FEATURE_UNAVAILABLE );
+    }
+    return( 0 );
+}
+
+#if !defined(MBEDTLS_X509_REMOVE_INFO)
 static int x509_info_subject_alt_name( char **buf, size_t *size,
                                        const mbedtls_x509_sequence
                                                     *subject_alt_name,
@@ -1872,56 +1940,6 @@ static int x509_info_subject_alt_name( char **buf, size_t *size,
     *size = n;
     *buf = p;
 
-    return( 0 );
-}
-
-int mbedtls_x509_parse_subject_alt_name( const mbedtls_x509_buf *san_buf,
-                                         mbedtls_x509_subject_alternative_name *san )
-{
-    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
-    switch( san_buf->tag &
-            ( MBEDTLS_ASN1_TAG_CLASS_MASK |
-              MBEDTLS_ASN1_TAG_VALUE_MASK ) )
-    {
-        /*
-         * otherName
-         */
-        case( MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_X509_SAN_OTHER_NAME ):
-        {
-            mbedtls_x509_san_other_name other_name;
-
-            ret = x509_get_other_name( san_buf, &other_name );
-            if( ret != 0 )
-                return( ret );
-
-            memset( san, 0, sizeof( mbedtls_x509_subject_alternative_name ) );
-            san->type = MBEDTLS_X509_SAN_OTHER_NAME;
-            memcpy( &san->san.other_name,
-                    &other_name, sizeof( other_name ) );
-
-        }
-        break;
-
-        /*
-         * dNSName
-         */
-        case( MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_X509_SAN_DNS_NAME ):
-        {
-            memset( san, 0, sizeof( mbedtls_x509_subject_alternative_name ) );
-            san->type = MBEDTLS_X509_SAN_DNS_NAME;
-
-            memcpy( &san->san.unstructured_name,
-                    san_buf, sizeof( *san_buf ) );
-
-        }
-        break;
-
-        /*
-         * Type not supported
-         */
-        default:
-            return( MBEDTLS_ERR_X509_FEATURE_UNAVAILABLE );
-    }
     return( 0 );
 }
 
@@ -2198,29 +2216,12 @@ struct x509_crt_verify_string {
     const char *string;
 };
 
+#define X509_CRT_ERROR_INFO( err, err_str, info ) { err, info },
 static const struct x509_crt_verify_string x509_crt_verify_strings[] = {
-    { MBEDTLS_X509_BADCERT_EXPIRED,       "The certificate validity has expired" },
-    { MBEDTLS_X509_BADCERT_REVOKED,       "The certificate has been revoked (is on a CRL)" },
-    { MBEDTLS_X509_BADCERT_CN_MISMATCH,   "The certificate Common Name (CN) does not match with the expected CN" },
-    { MBEDTLS_X509_BADCERT_NOT_TRUSTED,   "The certificate is not correctly signed by the trusted CA" },
-    { MBEDTLS_X509_BADCRL_NOT_TRUSTED,    "The CRL is not correctly signed by the trusted CA" },
-    { MBEDTLS_X509_BADCRL_EXPIRED,        "The CRL is expired" },
-    { MBEDTLS_X509_BADCERT_MISSING,       "Certificate was missing" },
-    { MBEDTLS_X509_BADCERT_SKIP_VERIFY,   "Certificate verification was skipped" },
-    { MBEDTLS_X509_BADCERT_OTHER,         "Other reason (can be used by verify callback)" },
-    { MBEDTLS_X509_BADCERT_FUTURE,        "The certificate validity starts in the future" },
-    { MBEDTLS_X509_BADCRL_FUTURE,         "The CRL is from the future" },
-    { MBEDTLS_X509_BADCERT_KEY_USAGE,     "Usage does not match the keyUsage extension" },
-    { MBEDTLS_X509_BADCERT_EXT_KEY_USAGE, "Usage does not match the extendedKeyUsage extension" },
-    { MBEDTLS_X509_BADCERT_NS_CERT_TYPE,  "Usage does not match the nsCertType extension" },
-    { MBEDTLS_X509_BADCERT_BAD_MD,        "The certificate is signed with an unacceptable hash." },
-    { MBEDTLS_X509_BADCERT_BAD_PK,        "The certificate is signed with an unacceptable PK alg (eg RSA vs ECDSA)." },
-    { MBEDTLS_X509_BADCERT_BAD_KEY,       "The certificate is signed with an unacceptable key (eg bad curve, RSA too short)." },
-    { MBEDTLS_X509_BADCRL_BAD_MD,         "The CRL is signed with an unacceptable hash." },
-    { MBEDTLS_X509_BADCRL_BAD_PK,         "The CRL is signed with an unacceptable PK alg (eg RSA vs ECDSA)." },
-    { MBEDTLS_X509_BADCRL_BAD_KEY,        "The CRL is signed with an unacceptable key (eg bad curve, RSA too short)." },
+    MBEDTLS_X509_CRT_ERROR_INFO_LIST
     { 0, NULL }
 };
+#undef X509_CRT_ERROR_INFO
 
 int mbedtls_x509_crt_verify_info( char *buf, size_t size, const char *prefix,
                           uint32_t flags )
@@ -2249,8 +2250,8 @@ int mbedtls_x509_crt_verify_info( char *buf, size_t size, const char *prefix,
 
     return( (int) ( size - n ) );
 }
+#endif /* MBEDTLS_X509_REMOVE_INFO */
 
-#if defined(MBEDTLS_X509_CHECK_KEY_USAGE)
 int mbedtls_x509_crt_check_key_usage( const mbedtls_x509_crt *crt,
                                       unsigned int usage )
 {
@@ -2273,9 +2274,7 @@ int mbedtls_x509_crt_check_key_usage( const mbedtls_x509_crt *crt,
 
     return( 0 );
 }
-#endif
 
-#if defined(MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE)
 int mbedtls_x509_crt_check_extended_key_usage( const mbedtls_x509_crt *crt,
                                        const char *usage_oid,
                                        size_t usage_len )
@@ -2305,7 +2304,6 @@ int mbedtls_x509_crt_check_extended_key_usage( const mbedtls_x509_crt *crt,
 
     return( MBEDTLS_ERR_X509_BAD_INPUT_DATA );
 }
-#endif /* MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE */
 
 #if defined(MBEDTLS_X509_CRL_PARSE_C)
 /*
@@ -2356,14 +2354,12 @@ static int x509_crt_verifycrl( mbedtls_x509_crt *crt, mbedtls_x509_crt *ca,
         /*
          * Check if the CA is configured to sign CRLs
          */
-#if defined(MBEDTLS_X509_CHECK_KEY_USAGE)
         if( mbedtls_x509_crt_check_key_usage( ca,
                                               MBEDTLS_X509_KU_CRL_SIGN ) != 0 )
         {
             flags |= MBEDTLS_X509_BADCRL_NOT_TRUSTED;
             break;
         }
-#endif
 
         /*
          * Check if CRL is correctly signed by the trusted CA
@@ -2500,13 +2496,11 @@ static int x509_crt_check_parent( const mbedtls_x509_crt *child,
     if( need_ca_bit && ! parent->ca_istrue )
         return( -1 );
 
-#if defined(MBEDTLS_X509_CHECK_KEY_USAGE)
     if( need_ca_bit &&
         mbedtls_x509_crt_check_key_usage( parent, MBEDTLS_X509_KU_KEY_CERT_SIGN ) != 0 )
     {
         return( -1 );
     }
-#endif
 
     return( 0 );
 }

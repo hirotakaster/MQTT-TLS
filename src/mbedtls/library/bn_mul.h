@@ -36,11 +36,7 @@
 #ifndef MBEDTLS_BN_MUL_H
 #define MBEDTLS_BN_MUL_H
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/include/mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/include/mbedtls/build_info.h"
 
 #include "mbedtls/include/mbedtls/bignum.h"
 
@@ -228,7 +224,7 @@
         "adcq   %%rdx, %%rcx\n"             \
         "addq   $8, %%rdi\n"
 
-#define MULADDC_STOP                        \
+#define MULADDC_STOP                                                 \
         : "+c" (c), "+D" (d), "+S" (s), "+m" (*(uint64_t (*)[16]) d) \
         : "b" (b), "m" (*(const uint64_t (*)[16]) s)                 \
         : "rax", "rdx", "r8"                                         \

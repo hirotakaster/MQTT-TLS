@@ -25,12 +25,9 @@
 
 #ifndef MBEDTLS_PSA_UTIL_H
 #define MBEDTLS_PSA_UTIL_H
+#include "mbedtls/include/mbedtls/private_access.h"
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/include/mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/include/mbedtls/build_info.h"
 
 #if defined(MBEDTLS_USE_PSA_CRYPTO)
 
@@ -40,6 +37,7 @@
 #include "mbedtls/include/mbedtls/md.h"
 #include "mbedtls/include/mbedtls/pk.h"
 #include "mbedtls/include/mbedtls/oid.h"
+#include "mbedtls/include/mbedtls/error.h"
 
 #include <string.h>
 
@@ -53,6 +51,9 @@ static inline psa_key_type_t mbedtls_psa_translate_cipher_type(
         case MBEDTLS_CIPHER_AES_128_CCM:
         case MBEDTLS_CIPHER_AES_192_CCM:
         case MBEDTLS_CIPHER_AES_256_CCM:
+        case MBEDTLS_CIPHER_AES_128_CCM_STAR_NO_TAG:
+        case MBEDTLS_CIPHER_AES_192_CCM_STAR_NO_TAG:
+        case MBEDTLS_CIPHER_AES_256_CCM_STAR_NO_TAG:
         case MBEDTLS_CIPHER_AES_128_GCM:
         case MBEDTLS_CIPHER_AES_192_GCM:
         case MBEDTLS_CIPHER_AES_256_GCM:
@@ -68,6 +69,9 @@ static inline psa_key_type_t mbedtls_psa_translate_cipher_type(
         /* case MBEDTLS_CIPHER_ARIA_128_CCM:
            case MBEDTLS_CIPHER_ARIA_192_CCM:
            case MBEDTLS_CIPHER_ARIA_256_CCM:
+           case MBEDTLS_CIPHER_ARIA_128_CCM_STAR_NO_TAG:
+           case MBEDTLS_CIPHER_ARIA_192_CCM_STAR_NO_TAG:
+           case MBEDTLS_CIPHER_ARIA_256_CCM_STAR_NO_TAG:
            case MBEDTLS_CIPHER_ARIA_128_GCM:
            case MBEDTLS_CIPHER_ARIA_192_GCM:
            case MBEDTLS_CIPHER_ARIA_256_GCM:
@@ -92,6 +96,8 @@ static inline psa_algorithm_t mbedtls_psa_translate_cipher_mode(
             return( PSA_ALG_AEAD_WITH_SHORTENED_TAG( PSA_ALG_GCM, taglen ) );
         case MBEDTLS_MODE_CCM:
             return( PSA_ALG_AEAD_WITH_SHORTENED_TAG( PSA_ALG_CCM, taglen ) );
+        case MBEDTLS_MODE_CCM_STAR_NO_TAG:
+            return PSA_ALG_CCM_STAR_NO_TAG;
         case MBEDTLS_MODE_CBC:
             if( taglen == 0 )
                 return( PSA_ALG_CBC_NO_PADDING );
@@ -122,14 +128,6 @@ static inline psa_algorithm_t mbedtls_psa_translate_md( mbedtls_md_type_t md_alg
 {
     switch( md_alg )
     {
-#if defined(MBEDTLS_MD2_C)
-    case MBEDTLS_MD_MD2:
-        return( PSA_ALG_MD2 );
-#endif
-#if defined(MBEDTLS_MD4_C)
-    case MBEDTLS_MD_MD4:
-        return( PSA_ALG_MD4 );
-#endif
 #if defined(MBEDTLS_MD5_C)
     case MBEDTLS_MD_MD5:
         return( PSA_ALG_MD5 );
@@ -138,15 +136,19 @@ static inline psa_algorithm_t mbedtls_psa_translate_md( mbedtls_md_type_t md_alg
     case MBEDTLS_MD_SHA1:
         return( PSA_ALG_SHA_1 );
 #endif
-#if defined(MBEDTLS_SHA256_C)
+#if defined(MBEDTLS_SHA224_C)
     case MBEDTLS_MD_SHA224:
         return( PSA_ALG_SHA_224 );
+#endif
+#if defined(MBEDTLS_SHA256_C)
     case MBEDTLS_MD_SHA256:
         return( PSA_ALG_SHA_256 );
 #endif
-#if defined(MBEDTLS_SHA512_C)
+#if defined(MBEDTLS_SHA384_C)
     case MBEDTLS_MD_SHA384:
         return( PSA_ALG_SHA_384 );
+#endif
+#if defined(MBEDTLS_SHA512_C)
     case MBEDTLS_MD_SHA512:
         return( PSA_ALG_SHA_512 );
 #endif
@@ -356,11 +358,11 @@ static inline int mbedtls_psa_err_translate_pk( psa_status_t status )
         case PSA_ERROR_COMMUNICATION_FAILURE:
         case PSA_ERROR_HARDWARE_FAILURE:
         case PSA_ERROR_CORRUPTION_DETECTED:
-            return( MBEDTLS_ERR_PK_HW_ACCEL_FAILED );
+            return( MBEDTLS_ERR_PLATFORM_HW_ACCEL_FAILED );
         default: /* We return the same as for the 'other failures',
                   * but list them separately nonetheless to indicate
                   * which failure conditions we have considered. */
-            return( MBEDTLS_ERR_PK_HW_ACCEL_FAILED );
+            return( MBEDTLS_ERR_PLATFORM_HW_ACCEL_FAILED );
     }
 }
 

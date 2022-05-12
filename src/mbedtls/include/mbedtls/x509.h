@@ -21,12 +21,9 @@
  */
 #ifndef MBEDTLS_X509_H
 #define MBEDTLS_X509_H
+#include "mbedtls/include/mbedtls/private_access.h"
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/include/mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/include/mbedtls/build_info.h"
 
 #include "mbedtls/include/mbedtls/asn1.h"
 #include "mbedtls/include/mbedtls/pk.h"
@@ -311,17 +308,6 @@ int mbedtls_x509_time_is_past( const mbedtls_x509_time *to );
  */
 int mbedtls_x509_time_is_future( const mbedtls_x509_time *from );
 
-#if defined(MBEDTLS_SELF_TEST)
-
-/**
- * \brief          Checkup routine
- *
- * \return         0 if successful, or 1 if the test failed
- */
-int mbedtls_x509_self_test( int verbose );
-
-#endif /* MBEDTLS_SELF_TEST */
-
 /*
  * Internal module functions. You probably do not want to use these unless you
  * know you do.
@@ -347,9 +333,11 @@ int mbedtls_x509_get_serial( unsigned char **p, const unsigned char *end,
                      mbedtls_x509_buf *serial );
 int mbedtls_x509_get_ext( unsigned char **p, const unsigned char *end,
                   mbedtls_x509_buf *ext, int tag );
+#if !defined(MBEDTLS_X509_REMOVE_INFO)
 int mbedtls_x509_sig_alg_gets( char *buf, size_t size, const mbedtls_x509_buf *sig_oid,
                        mbedtls_pk_type_t pk_alg, mbedtls_md_type_t md_alg,
                        const void *sig_opts );
+#endif
 int mbedtls_x509_key_size_helper( char *buf, size_t buf_size, const char *name );
 int mbedtls_x509_string_to_names( mbedtls_asn1_named_data **head, const char *name );
 int mbedtls_x509_set_extension( mbedtls_asn1_named_data **head, const char *oid, size_t oid_len,

@@ -25,11 +25,7 @@
 #ifndef MBEDTLS_AESNI_H
 #define MBEDTLS_AESNI_H
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/include/mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/include/mbedtls/build_info.h"
 
 #include "mbedtls/include/mbedtls/aes.h"
 

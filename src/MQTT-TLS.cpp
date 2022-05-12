@@ -683,7 +683,7 @@ int MQTT::enableTls(const char *rootCaPem, const size_t rootCaPemSize,
     }
 
     if (clientKeyPem != NULL && clientKeyPemSize > 0) {
-      if ((ret = mbedtls_pk_parse_key(&pkey, (const unsigned char *)clientKeyPem, clientKeyPemSize, NULL, 0)) != 0) {
+      if ((ret = mbedtls_pk_parse_key(&pkey, (const unsigned char *)clientKeyPem, clientKeyPemSize, NULL, 0, nullptr, nullptr)) != 0) {
         debug_tls(" tlsClientKey mbedtls_pk_parse_key error : %d\n", ret);
         return ret;
       }
