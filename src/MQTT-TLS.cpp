@@ -716,7 +716,7 @@ int MQTT::enableTls(const char *rootCaPem, const size_t rootCaPemSize,
 
 
 int MQTT::handShakeTls() {
-  int ret;
+  int ret = -1;
   debug_tls("hand shake start\n");
   do {
       while (ssl.state != MBEDTLS_SSL_HANDSHAKE_OVER) {
