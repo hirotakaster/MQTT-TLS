@@ -199,7 +199,6 @@ uint8_t MQTT::readByte() {
         while(!tcpClient.available()) {}
         return tcpClient.read();
     } else {
-        uint8_t val = 0;
         uint8_t buff;
 
         if (tlsConnected) {
